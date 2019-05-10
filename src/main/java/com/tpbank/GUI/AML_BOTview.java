@@ -1,4 +1,4 @@
-package tpbank.GUI;
+package com.tpbank.GUI;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
@@ -6,16 +6,17 @@ import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
 
-
 import com.tpbank.control.StartTask;
-import tpbank.control.SingleTaskTimer;
-
-
+import com.tpbank.control.SingleTaskTimer;
+import com.tpbank.dbJob.WriteLogToPdf;
+import com.tpbank.dbJob.QueryJob;
 
 import javax.swing.*;
+
 import java.awt.*;
 import java.io.File;
 import java.sql.Date;
+import java.sql.SQLException;
 import java.sql.Time;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -26,8 +27,17 @@ import java.util.prefs.Preferences;
 
 public class AML_BOTview extends JFrame {
     private String downloadFolder = defaultPathString();
+    private String StartDateStr = null;
+    private String EndDateStr = null;
+    // private String log = "";
+    // private String nameFile = "";
+    // private String log = "";
 
-    public AML_BOTview() {
+    boolean btViewData = false;
+
+    QueryJob queryJob = new QueryJob();
+
+    public AML_BOTview() throws ClassNotFoundException, SQLException {
         createGUI();
         setDisplay();
     }
@@ -42,11 +52,12 @@ public class AML_BOTview extends JFrame {
         setDefaultLookAndFeelDecorated(true);
     }
 
-    private void createGUI() {
+    private void createGUI() throws ClassNotFoundException, SQLException {
         getContentPane().add(createTabbedPane());
     }
 
-    private JTabbedPane createTabbedPane() {
+    private JTabbedPane createTabbedPane() throws ClassNotFoundException,
+            SQLException {
         JTabbedPane tablePane = new JTabbedPane();
         tablePane.setBackground(Color.lightGray);
 
@@ -59,17 +70,16 @@ public class AML_BOTview extends JFrame {
         JPanel panelEstablish = createPanelEstablish();
         panelEstablish.setBackground(Color.lightGray);
 
-        tablePane
-                .addTab("Monitor", null, panelMonitor, "click to show panel 1");
-        tablePane.addTab("Báo cáo", null, panelResult, "click to show panel 1");
-        tablePane.addTab("Thiết lập", null, panelEstablish,
-                "click to show panel 1");
-        tablePane.setSelectedIndex(tablePane.getTabCount() - 3);
+        tablePane.addTab("Hiển thị", null, panelMonitor);
+        tablePane.addTab("Báo cáo", null, panelResult);
+        tablePane.addTab("Thiết lập", null, panelEstablish);
+        tablePane.setSelectedIndex(tablePane.getTabCount() - 2);
 
         return tablePane;
     }
 
-    private JPanel createPanelResult() {
+    private JPanel createPanelResult() throws ClassNotFoundException,
+            SQLException {
         JPanel panel = new JPanel();
 
         GridBagLayout layout = new GridBagLayout();
@@ -77,16 +87,44 @@ public class AML_BOTview extends JFrame {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        JScrollPane scrollPane = new JScrollPane(createTextArea(10, 40));
+        JTextArea showLog = createTextArea(10, 40);
+        JScrollPane scrollPane = new JScrollPane(showLog);
+
         JLabel fromDate = createLabel("Từ ngày: ");
         JLabel toDate = createLabel("Tới ngày: ");
 
-        DatePicker jdStartDate = generateDatePicker();
-        DatePicker jdEndDate = generateDatePicker();
+        DatePicker jdStartDateRs = generateDatePicker();
+        DatePicker jdEndDateRs = generateDatePicker();
 
-        // JTextArea textFromDate = createTextArea(1, 1);
-        // JTextArea textToDate = createTextArea(1, 1);
+        JButton btView = createButton("Hiển thị ghi chú");
+        btView.addActionListener(e -> {
+            // btViewData = true;
+            QueryJob queryJob = new QueryJob(jdStartDateRs, jdEndDateRs);
+            String log;
+            try {
+                log = converteLinkedListToString(queryJob.querryJob());
+                showLog.append(log);
+            } catch (Exception e2) {
+                // TODO Auto-generated catch block
+                e2.printStackTrace();
+            }
+
+        });
         JButton btExport = createButton("Xuất ra file *.pdf");
+        btExport.addActionListener(e -> {
+            QueryJob queryJob = new QueryJob(jdStartDateRs, jdEndDateRs);
+            LinkedList<String> log;
+            String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
+            try {
+                log = queryJob.querryJob();
+                WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
+                createPdf.createTextToAPdf(log, nameFile);
+            } catch (Exception e1) {
+                // TODO Auto-generated catch block
+                e1.printStackTrace();
+            }
+
+        });
 
         c.fill = GridBagConstraints.HORIZONTAL;
         c.ipady = 40; // make this component tall
@@ -109,7 +147,7 @@ public class AML_BOTview extends JFrame {
         c.gridx = 1;
         c.gridy = 1;
         c.gridwidth = 2;
-        panel.add(jdStartDate, c);
+        panel.add(jdStartDateRs, c);
 
         c.fill = GridBagConstraints.HORIZONTAL;
         c.gridx = 0;
@@ -122,14 +160,21 @@ public class AML_BOTview extends JFrame {
         c.gridx = 1;
         c.gridy = 2;
         c.gridwidth = 2;
-        panel.add(jdEndDate, c);
+        panel.add(jdEndDateRs, c);
 
-        c.fill = GridBagConstraints.HORIZONTAL;
+        c.fill = GridBagConstraints.EAST;
         c.gridx = 1;
         c.gridy = 3;
         c.gridwidth = 1;
         c.insets = new Insets(10, 0, 0, 0);
         panel.add(btExport, c);
+
+        c.fill = GridBagConstraints.WEST;
+        c.gridx = 2;
+        c.gridy = 3;
+        c.gridwidth = 1;
+        c.insets = new Insets(10, 0, 0, 0);
+        panel.add(btView, c);
         return panel;
     }
 
@@ -157,7 +202,6 @@ public class AML_BOTview extends JFrame {
 
     private JPanel createPanelEstablish() {
         SingleTaskTimer timer = new SingleTaskTimer();
-
 
         JPanel pl = new JPanel();
         GridBagLayout layout = new GridBagLayout();
@@ -189,8 +233,11 @@ public class AML_BOTview extends JFrame {
             Calendar calEnd = calendarFromPickers(jdEndDate, jdTimeEnd);
             Calendar calStart = calendarFromPickers(jdStartDate, jdTimeStart);
             int period = Integer.parseInt(textIntervalPeriod.getText());
-            long timePeriod = TimeUnit.MILLISECONDS.convert(period, TimeUnit.SECONDS);
+            long timePeriod = TimeUnit.MILLISECONDS.convert(period,
+                    TimeUnit.SECONDS);
 
+//            timer.setTask(new StartTask(downloadFolder));
+//            timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
             timer.setTask(new StartTask(downloadFolder));
             timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
         });
@@ -307,7 +354,7 @@ public class AML_BOTview extends JFrame {
         c.insets = new Insets(10, 0, 0, 0);
         pl.add(textIntervalPeriod, c);
 
-        //intervalUnitTime
+        // intervalUnitTime
         c.gridx = 3;
         c.gridy = 2;
         c.gridwidth = 2;
@@ -316,7 +363,6 @@ public class AML_BOTview extends JFrame {
         c.weightx = 0.0;
         c.insets = new Insets(10, 10, 0, 0);
         pl.add(intervalUnitTime, c);
-
 
         // Textarea intervalPeriod
         c.fill = GridBagConstraints.HORIZONTAL;
@@ -396,8 +442,7 @@ public class AML_BOTview extends JFrame {
         return datePicker;
     }
 
-    private TimePicker
-    generateTimePicker() {
+    private TimePicker generateTimePicker() {
         // Set up the form which holds the date picker components.
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new FlowLayout());
@@ -433,7 +478,8 @@ public class AML_BOTview extends JFrame {
         return pref.get("DEFAULT_PATH", "");
     }
 
-    private Calendar calendarFromPickers(DatePicker datePicker, TimePicker timePicker) {
+    private Calendar calendarFromPickers(DatePicker datePicker,
+                                         TimePicker timePicker) {
         Date date = sqlDateFrom(datePicker);
         Time time = sqlTimeFrom(timePicker);
 
@@ -455,4 +501,20 @@ public class AML_BOTview extends JFrame {
         LocalDate localDate = datePicker.getDate();
         return java.sql.Date.valueOf(localDate);
     }
+
+    private String converteLinkedListToString(LinkedList<String> list) {
+
+        String listString = "";
+
+        StringBuilder string = new StringBuilder();
+        Iterator<?> it = list.descendingIterator();
+
+        while (it.hasNext()) {
+            string.append(it.next());
+            string.append("\n");
+        }
+        listString = string.toString();
+        return listString;
+    }
+
 }

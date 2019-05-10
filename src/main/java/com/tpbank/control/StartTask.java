@@ -22,7 +22,7 @@ public class StartTask extends TimerTask {
 
     //TODO: option download folder
     private ChromeOptions configChrome() {
-        System.setProperty("webdriver.chrome.driver", "drives/chromedriver");
+        System.setProperty("webdriver.chrome.driver", "drives/chromedriv");
         String downloadFilepath = downloadFolder;
         HashMap<String, Object> chromePrefs = new HashMap<String, Object>();
         chromePrefs.put("profile.default_content_settings.popups", 0);
@@ -42,7 +42,7 @@ public class StartTask extends TimerTask {
         String submit = "//input[@type='submit']";
         WebDriver driver = null;
 
-        System.setProperty("webdriver.chrome.driver", "drives/chromedriver");
+        System.setProperty("webdriver.chrome.driver", "drivers/chromedriver");
 
         try {
             driver = new ChromeDriver(configChrome());
@@ -97,7 +97,8 @@ public class StartTask extends TimerTask {
             //driver.findElement(By.xpath("//input[@value=\"Xuất PDF\"]")).click();
             driver.findElement(By.xpath(submit)).click();
             new WebDriverWait(driver, 30);
-
+            Thread.sleep(10000);
+            driver.quit();
 
         } catch (Exception e) {
             e.printStackTrace();

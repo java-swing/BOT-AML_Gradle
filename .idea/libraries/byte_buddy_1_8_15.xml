@@ -7,6 +7,8 @@
       <root url="jar://$PROJECT_DIR$/libs/guava-25.0-jre.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/okhttp-3.11.0.jar!/" />
       <root url="jar://$PROJECT_DIR$/libs/okio-1.14.0.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/1.04_PDFOneJava_gpl.jar!/" />
+      <root url="jar://$PROJECT_DIR$/libs/fontbox-2.0.2.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />
