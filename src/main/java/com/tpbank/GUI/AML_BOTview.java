@@ -9,7 +9,8 @@ import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
 import com.tpbank.control.StartTask;
 import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.dbJob.WriteLogToPdf;
-import com.tpbank.dbJob.QueryJob;
+import com.tpbank.dbJob.QueryJobInOracle;
+import com.tpbank.dbJob.QueryJobInMySql;
 
 import javax.swing.*;
 
@@ -35,7 +36,7 @@ public class AML_BOTview extends JFrame {
 
     boolean btViewData = false;
 
-    QueryJob queryJob = new QueryJob();
+    QueryJobInOracle queryJobInOracle = new QueryJobInOracle();
 
     public AML_BOTview() throws ClassNotFoundException, SQLException {
         createGUI();
@@ -99,10 +100,10 @@ public class AML_BOTview extends JFrame {
         JButton btView = createButton("Hiển thị ghi chú");
         btView.addActionListener(e -> {
             // btViewData = true;
-            QueryJob queryJob = new QueryJob(jdStartDateRs, jdEndDateRs);
+            QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
             String log;
             try {
-                log = converteLinkedListToString(queryJob.querryJob());
+                log = converteLinkedListToString(queryJobInMySql.querryJobInMySQL());
                 showLog.append(log);
             } catch (Exception e2) {
                 // TODO Auto-generated catch block
@@ -112,11 +113,12 @@ public class AML_BOTview extends JFrame {
         });
         JButton btExport = createButton("Xuất ra file *.pdf");
         btExport.addActionListener(e -> {
-            QueryJob queryJob = new QueryJob(jdStartDateRs, jdEndDateRs);
+//            QueryJobInOracle queryJobInOracle = new QueryJobInOracle(jdStartDateRs, jdEndDateRs);
+            QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
             LinkedList<String> log;
             String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             try {
-                log = queryJob.querryJob();
+                log = queryJobInMySql.querryJobInMySQL();
                 WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
                 createPdf.createTextToAPdf(log, nameFile);
             } catch (Exception e1) {
