@@ -74,7 +74,7 @@ public class QueryJobInMySql {
         String queryStr = "";
         queryStr = " select * from AML_BOT_LOG_MYSQL a where a.Create_Time between "
                 + "'" + jdStartDateRs2 + " ' " + "and " + "'" + jdEndDateRs2
-                + "'" + " order by a.Create_Time ASC";
+                + "'" + " order by a.Create_Time DESC";
         return queryStr;
     }
 }

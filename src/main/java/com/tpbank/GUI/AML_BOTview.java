@@ -11,6 +11,7 @@ import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.dbJob.WriteLogToPdf;
 import com.tpbank.dbJob.QueryJobInOracle;
 import com.tpbank.dbJob.QueryJobInMySql;
+import com.tpbank.dbJob.WritePdfTest;
 
 import javax.swing.*;
 
@@ -130,6 +131,9 @@ public class AML_BOTview extends JFrame {
 
                 WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
                 createPdf.createTextToAPdf(log, nameFile);
+
+//                WritePdfTest newPdf = new WritePdfTest(log, nameFile);
+//                newPdf.createTextToAPdf(log, nameFile);
             } catch (Exception e1) {
                 // TODO Auto-generated catch block
                 e1.printStackTrace();

@@ -13,12 +13,12 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
-public class WriteLogToPdf {
+public class WritePdfTest {
 
     private LinkedList<String> logLinkedList;
     private String nameFile;
 
-    public WriteLogToPdf(LinkedList<String> logLinkedList, String nameFile) {
+    public WritePdfTest(LinkedList<String> logLinkedList, String nameFile) {
         this.logLinkedList = logLinkedList;
         this.nameFile = nameFile;
     }
