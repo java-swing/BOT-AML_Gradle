@@ -11,7 +11,9 @@ import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
+import org.apache.pdfbox.pdmodel.font.PDSimpleFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
+
 
 import javax.xml.soap.Node;
 
@@ -37,9 +39,15 @@ public class WriteLogToPdf {
         // the pdf margin
         int cursorX = 55;
         int cursorY = 750;
-        PDFont pdFont = PDType1Font.HELVETICA;
+//        PDFont pdFont = PDType1Font.HELVETICA;
+        PDSimpleFont pdFont = PDType1Font.HELVETICA;
         int fontSize = 12;
         int margin = 50;
+        float totalHeight = margin;
+        float fontHeight = pdFont.getFontDescriptor().getFontBoundingBox()
+                .getHeight()
+                / 1000 * fontSize;
+        float a4Height = PDRectangle.A4.getHeight();
 
         // Using the PDRectangle class get the printableWidth
         PDRectangle mediabox = pdPage.getMediaBox();
@@ -64,12 +72,6 @@ public class WriteLogToPdf {
                     float lenForSubString = contentLength / rem;
                     int lenForSubStringInt = (int) Math.floor(lenForSubString);
 
-                    if (contentLength > 1000) {
-                        contentLength = contentLength -1000;
-                        PDPage blankPage = new PDPage();
-                        pdDocument.addPage(blankPage);
-
-                    }
                     finalLines.add(content.substring(0, lenForSubStringInt));
                     content = content.substring(lenForSubStringInt);
                 } else {
@@ -94,7 +96,25 @@ public class WriteLogToPdf {
                 String value = it.next();
                 pdPageContentStream.showText(value);
                 pdPageContentStream.newLine();
+
+                // kiem tra tong chieu cao so dong co luon hon margin cua trang khong sau do them trang moi
+                totalHeight += fontHeight;
+                if(totalHeight+margin>=a4Height){
+                    PDPage blankPage = new PDPage();
+                    pdDocument.addPage(blankPage);
+                    totalHeight = margin;
+
+                    pdPageContentStream.endText();
+                    pdPageContentStream.close();
+
+                    // add new line at cursorX and cursorY
+                    PDPageContentStream newpdPageContentStream = new PDPageContentStream(pdDocument, pdPage);
+                    newpdPageContentStream.beginText();
+                    newpdPageContentStream.newLineAtOffset(cursorX, cursorY);
+                }
+
             }
+
             pdPageContentStream.endText();
             pdPageContentStream.close();
 
