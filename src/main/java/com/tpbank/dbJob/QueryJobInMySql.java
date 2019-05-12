@@ -63,7 +63,7 @@ public class QueryJobInMySql {
 
         }
 
-        System.out.println("finish " + log);
+        System.out.println("finish at QueryJobInMySql" + log);
         // Đóng kết nối
         connection.close();
         return logLinkedList;
@@ -74,7 +74,7 @@ public class QueryJobInMySql {
         String queryStr = "";
         queryStr = " select * from AML_BOT_LOG_MYSQL a where a.Create_Time between "
                 + "'" + jdStartDateRs2 + " ' " + "and " + "'" + jdEndDateRs2
-                + "'" + " order by a.Create_Time";
+                + "'" + " order by a.Create_Time ASC";
         return queryStr;
     }
 }

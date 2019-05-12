@@ -119,6 +119,15 @@ public class AML_BOTview extends JFrame {
             String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             try {
                 log = queryJobInMySql.querryJobInMySQL();
+
+                Iterator<String> it = log.iterator();
+                System.out.println("Print Log in Export file");
+                System.out.println("===========================================");
+                while(it.hasNext()) {
+                    String value = it.next();
+                    System.out.println(value);
+                }
+
                 WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
                 createPdf.createTextToAPdf(log, nameFile);
             } catch (Exception e1) {
@@ -238,8 +247,6 @@ public class AML_BOTview extends JFrame {
             long timePeriod = TimeUnit.MILLISECONDS.convert(period,
                     TimeUnit.SECONDS);
 
-//            timer.setTask(new StartTask(downloadFolder));
-//            timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
             timer.setTask(new StartTask(downloadFolder));
             timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
         });

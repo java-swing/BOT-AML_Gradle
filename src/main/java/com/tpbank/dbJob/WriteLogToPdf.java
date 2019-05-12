@@ -33,7 +33,7 @@ public class WriteLogToPdf {
 		// Setting the font to the Content stream
 		contentStream.setFont(PDType1Font.TIMES_ROMAN, 16);
 
-		// không sử dụng được for each nên phải sử dụng interator cho linkedlist đẻ add các dòng vào contentStream
+		// không sử dụng được for each nên phải sử dụng iterator cho linkedlist đẻ add các dòng vào contentStream
 		Iterator<String> it = log.iterator();
 		while(it.hasNext()) {
 			String value = it.next();
@@ -56,7 +56,7 @@ public class WriteLogToPdf {
 		contentStream.close();
 
 		// Saving the document
-		doc.save(new File("D:\\pdfBox\\" + nameFile + ".pdf"));
+		doc.save(new File("/home/thanhdinh/IdeaPro/" + nameFile + ".pdf"));
 		System.out.println("PDF had been saved");
 
 		// Closing the document
