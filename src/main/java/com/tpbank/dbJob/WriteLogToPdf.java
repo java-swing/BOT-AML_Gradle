@@ -49,6 +49,14 @@ public class WriteLogToPdf {
                 / 1000 * fontSize;
         float a4Height = PDRectangle.A4.getHeight();
 
+        //checking add page when total line height and margin > a4height
+        totalHeight += fontHeight;
+        if(totalHeight+margin>=a4Height){
+            PDPage blankPage = new PDPage();
+            pdDocument.addPage(blankPage);
+            totalHeight = margin;
+        }
+
         // Using the PDRectangle class get the printableWidth
         PDRectangle mediabox = pdPage.getMediaBox();
         float printableWidth = mediabox.getWidth() - (2 * margin) - cursorX;
@@ -96,25 +104,7 @@ public class WriteLogToPdf {
                 String value = it.next();
                 pdPageContentStream.showText(value);
                 pdPageContentStream.newLine();
-
-                // kiem tra tong chieu cao so dong co luon hon margin cua trang khong sau do them trang moi
-                totalHeight += fontHeight;
-                if(totalHeight+margin>=a4Height){
-                    PDPage blankPage = new PDPage();
-                    pdDocument.addPage(blankPage);
-                    totalHeight = margin;
-
-                    pdPageContentStream.endText();
-                    pdPageContentStream.close();
-
-                    // add new line at cursorX and cursorY
-                    PDPageContentStream newpdPageContentStream = new PDPageContentStream(pdDocument, pdPage);
-                    newpdPageContentStream.beginText();
-                    newpdPageContentStream.newLineAtOffset(cursorX, cursorY);
-                }
-
             }
-
             pdPageContentStream.endText();
             pdPageContentStream.close();
 
@@ -147,3 +137,4 @@ public class WriteLogToPdf {
 
 //http://pdfboxtutorial.blogspot.com/2014/11/creating-multipage-pdf-using-pdfbox.html
 //https://stackoverflow.com/questions/42767534/pdfbox-issue-while-creating-a-new-page-dynamically?fbclid=IwAR08TRf6pdHUUlT2fdnu3vKFloa1WXxL2Af-6CINm7hayZItWmzw2CrcGJo
+// Đếm số dòng, tính số lượng bao nhiêu trang sau đó tạo ra vùng in có bấy nhiêu trang rồi cho
