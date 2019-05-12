@@ -8,21 +8,19 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 
-public class QueryJobInMySql extends  QueryJobInOracle{
+public class QueryJobInMySql {
     private DatePicker jdStartDateRs2;
     private DatePicker jdEndDateRs2;
 
-    public QueryJobInMySql(DatePicker jdStartDateRs, DatePicker jdEndDateRs) {
-
+    public QueryJobInMySql() {
     }
 
-    public QueryJobInMySql(DatePicker jdStartDateRs2, DatePicker jdEndDateRs2, DatePicker jdStartDateRs21, DatePicker jdEndDateRs21) {
-        super(jdStartDateRs2, jdEndDateRs2);
-        this.jdStartDateRs2 = jdStartDateRs21;
-        this.jdEndDateRs2 = jdEndDateRs21;
+    public QueryJobInMySql(DatePicker jdStartDateRs2, DatePicker jdEndDateRs2) {
+        this.jdStartDateRs2 = jdStartDateRs2;
+        this.jdEndDateRs2 = jdEndDateRs2;
     }
 
-//    @Override
+    //    @Override
     public LinkedList<String> querryJobInMySQL() throws ClassNotFoundException, SQLException {
         MySQLConnUtils conn = new MySQLConnUtils();
 
