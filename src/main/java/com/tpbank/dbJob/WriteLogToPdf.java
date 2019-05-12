@@ -13,6 +13,8 @@ import org.apache.pdfbox.pdmodel.common.PDRectangle;
 import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
+import javax.xml.soap.Node;
+
 public class WriteLogToPdf {
 
     private LinkedList<String> logLinkedList;
@@ -33,8 +35,8 @@ public class WriteLogToPdf {
 
         // Define all the constants like X, Y coordinates, font, font size and
         // the pdf margin
-        int cursorX = 25;
-        int cursorY = 700;
+        int cursorX = 55;
+        int cursorY = 750;
         PDFont pdFont = PDType1Font.HELVETICA;
         int fontSize = 12;
         int margin = 50;
@@ -61,6 +63,13 @@ public class WriteLogToPdf {
                     float rem = contentSize / printableWidth;
                     float lenForSubString = contentLength / rem;
                     int lenForSubStringInt = (int) Math.floor(lenForSubString);
+
+                    if (contentLength > 1000) {
+                        contentLength = contentLength -1000;
+                        PDPage blankPage = new PDPage();
+                        pdDocument.addPage(blankPage);
+
+                    }
                     finalLines.add(content.substring(0, lenForSubStringInt));
                     content = content.substring(lenForSubStringInt);
                 } else {
@@ -81,10 +90,10 @@ public class WriteLogToPdf {
             Iterator<String> it = logLinkedList.iterator();
             int count = 0;
             while (it.hasNext()) {
+
                 String value = it.next();
                 pdPageContentStream.showText(value);
                 pdPageContentStream.newLine();
-
             }
             pdPageContentStream.endText();
             pdPageContentStream.close();
@@ -114,5 +123,7 @@ public class WriteLogToPdf {
         return listString;
     }
 
-
 }
+
+//http://pdfboxtutorial.blogspot.com/2014/11/creating-multipage-pdf-using-pdfbox.html
+//https://stackoverflow.com/questions/42767534/pdfbox-issue-while-creating-a-new-page-dynamically?fbclid=IwAR08TRf6pdHUUlT2fdnu3vKFloa1WXxL2Af-6CINm7hayZItWmzw2CrcGJo
