@@ -8,10 +8,7 @@ import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
 
 import com.tpbank.control.StartTask;
 import com.tpbank.control.SingleTaskTimer;
-import com.tpbank.dbJob.WriteLogToPdf;
-import com.tpbank.dbJob.QueryJobInOracle;
-import com.tpbank.dbJob.QueryJobInMySql;
-import com.tpbank.dbJob.WritePdfTest;
+import com.tpbank.dbJob.*;
 
 import javax.swing.*;
 
@@ -104,7 +101,7 @@ public class AML_BOTview extends JFrame {
             QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
             String log;
             try {
-                log = converteLinkedListToString(queryJobInMySql.querryJobInMySQL());
+                log = converteLinkedListToString(converseLogToWrite(queryJobInMySql.querryJobInMySQL()));
                 showLog.append(log);
             } catch (Exception e2) {
                 // TODO Auto-generated catch block
@@ -129,8 +126,12 @@ public class AML_BOTview extends JFrame {
                     System.out.println(value);
                 }
 
-                WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
-                createPdf.createTextToAPdf(log, nameFile);
+//                WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
+//                createPdf.createTextToAPdf(log, nameFile);
+
+                WriteLogToTable createTableLog = new WriteLogToTable(log,
+                        nameFile);
+                createTableLog.drawTablePDF(log, nameFile);
 
 //                WritePdfTest newPdf = new WritePdfTest(log, nameFile);
 //                newPdf.createTextToAPdf(log, nameFile);
@@ -528,6 +529,31 @@ public class AML_BOTview extends JFrame {
         }
         listString = string.toString();
         return listString;
+    }
+
+    private LinkedList<String> converseLogToWrite(
+            LinkedList<String> logLinkedList) {
+        LinkedList<String> linkedExp = new LinkedList<String>();
+        ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
+        ArrayList<String> listExp = new ArrayList<String>();
+
+        int i = 0;
+        while (i <= listRaw.size() - 4) {
+            String valueId = listRaw.get(i);
+            String valueTaskName = listRaw.get(i + 1);
+            String valueFileName = listRaw.get(i + 2);
+            String valueCreatingTime = listRaw.get(i + 3);
+            String valueStatus = listRaw.get(i + 4);
+            listExp.add("---------------------------");
+            listExp.add("Task ID: " + valueId);
+            listExp.add("Task name: " + valueTaskName);
+            listExp.add("File name: " + valueFileName);
+            listExp.add("File name: " + valueCreatingTime);
+            listExp.add("Status: " + valueStatus);
+            i = i + 5;
+        }
+        linkedExp = new LinkedList<String>(listExp);
+        return linkedExp;
     }
 
 }

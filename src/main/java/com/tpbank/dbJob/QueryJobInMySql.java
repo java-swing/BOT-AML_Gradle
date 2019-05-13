@@ -43,6 +43,7 @@ public class QueryJobInMySql {
         while (rs.next()) {// Di chuyển con trỏ xuống bản ghi kế tiếp.
 
             int taskId = rs.getInt(1);
+            String taskIdStr = Integer.toString(taskId);
             String taskName = rs.getString(2);
             String fileName = rs.getString(3);
             String creatingTime = rs.getString(4);
@@ -54,12 +55,11 @@ public class QueryJobInMySql {
                     +"File name: "+fileName+"\n"
                     +"Time: "+creatingTime+"\n"
                     +"Status: "+status+"\n");
-            logLinkedList.add("---------------------------");
-            logLinkedList.add("Task ID: "+taskId);
-            logLinkedList.add("Task name: "+taskName);
-            logLinkedList.add("File name: "+fileName);
-            logLinkedList.add("Time: "+creatingTime);
-            logLinkedList.add("Status: "+status);
+            logLinkedList.add(taskIdStr);
+            logLinkedList.add(taskName);
+            logLinkedList.add(fileName);
+            logLinkedList.add(creatingTime);
+            logLinkedList.add(status);
 
         }
 
