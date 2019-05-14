@@ -1,9 +1,6 @@
 package com.tpbank.GUI.TestGui;
 
-import java.awt.BorderLayout;
-import java.awt.Color;
-import java.awt.FlowLayout;
-import java.awt.LayoutManager;
+import java.awt.*;
 
 import javax.swing.*;
 import javax.swing.border.Border;
@@ -28,33 +25,66 @@ public class newTab {
         //Create a border
         Border blackline = BorderFactory.createTitledBorder("Setting");
         JPanel panel = new JPanel();
-        LayoutManager layout = new FlowLayout();
+        GridBagLayout layout = new GridBagLayout();
         panel.setLayout(layout);
 
+        GridBagConstraints c = new GridBagConstraints();
+
         JPanel panel1 = new JPanel();
-        String spaces = "                   ";
-//
-//        panel1.add(new JLabel(spaces + "Title border to JPanel" + spaces));
-//        panel1.setBorder(blackline);
+        panel1.setBorder(blackline);
 
         JRadioButton r1=new JRadioButton("One time");
         JRadioButton r2=new JRadioButton("Daily");
         JRadioButton r3=new JRadioButton("Weekly");
         JRadioButton r4=new JRadioButton("Monthly");
-        r1.setBounds(75,50,100,30);
-        r2.setBounds(100,50,100,30);
-        r2.setBounds(125,50,100,30);
-        r2.setBounds(150,50,100,30);
+
         ButtonGroup bg=new ButtonGroup();
         bg.add(r1);bg.add(r2);
         bg.add(r3);bg.add(r4);
-        panel1.add(r1);
-        panel1.add(r2);
-        panel1.add(r3);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 0;
+        c.gridy = 0;
+        c.ipady = 0; // make this component tall
+        c.weightx = 0.0;
+        c.gridwidth = 0; // 2 columns wide
+        panel.add(r1, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 1;
+        c.gridy = 1;
+        c.ipady = 0; // make this component tall
+        c.weightx = 0.0;
+        c.gridwidth = 0; // 2 columns wide
+        panel1.add(r1, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 2;
+        c.gridy = 2;
+        c.ipady = 0; // make this component tall
+        c.weightx = 0.0;
+        c.gridwidth = 0; // 2 columns wide
+        panel1.add(r2, c);
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 3;
+        c.gridy = 3;
+        c.ipady = 0; // make this component tall
+        c.weightx = 0.0;
+        c.gridwidth = 0; // 2 columns wide
+        panel1.add(r3, c);
+
+
+        c.fill = GridBagConstraints.HORIZONTAL;
+        c.gridx = 4;
+        c.gridy = 4;
+        c.ipady = 0; // make this component tall
+        c.weightx = 0.0;
+        c.gridwidth = 0; // 2 columns wide
         panel1.add(r4);
 
 
         panel.add(panel1);
-        frame.getContentPane().add(panel, BorderLayout.EAST);
+        frame.getContentPane().add(panel, BorderLayout.CENTER);
     }
 }
