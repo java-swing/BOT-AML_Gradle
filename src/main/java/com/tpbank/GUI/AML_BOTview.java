@@ -99,6 +99,8 @@ public class AML_BOTview extends JFrame {
         btView.addActionListener(e -> {
             // btViewData = true;
             QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
+            String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
+            String title = "Task ID\tTask name\tFile name\tStatus";
             String log;
             try {
                 log = converteLinkedListToString(converseLogToWrite(queryJobInMySql.querryJobInMySQL()));
@@ -121,7 +123,7 @@ public class AML_BOTview extends JFrame {
                 Iterator<String> it = log.iterator();
                 System.out.println("Print Log in Export file");
                 System.out.println("===========================================");
-                while(it.hasNext()) {
+                while (it.hasNext()) {
                     String value = it.next();
                     System.out.println(value);
                 }
@@ -544,16 +546,13 @@ public class AML_BOTview extends JFrame {
             String valueFileName = listRaw.get(i + 2);
             String valueCreatingTime = listRaw.get(i + 3);
             String valueStatus = listRaw.get(i + 4);
-            listExp.add("---------------------------");
-            listExp.add("Task ID: " + valueId);
-            listExp.add("Task name: " + valueTaskName);
-            listExp.add("File name: " + valueFileName);
-            listExp.add("File name: " + valueCreatingTime);
-            listExp.add("Status: " + valueStatus);
+            listExp.add(valueId + "\t" + valueTaskName + "\t" + valueFileName
+                    + "\t" + valueCreatingTime + "\t" + valueStatus);
             i = i + 5;
         }
         linkedExp = new LinkedList<String>(listExp);
         return linkedExp;
     }
+
 
 }
