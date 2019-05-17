@@ -8,19 +8,10 @@ import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ContainerEvent;
-import java.awt.event.ContainerListener;
-import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.File;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
-import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalTime;
@@ -51,7 +42,6 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
 import com.tpbank.dbJob.QueryJobInMySql;
-import net.bytebuddy.implementation.attribute.TypeAttributeAppender.ForInstrumentedType.Differentiating;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
@@ -59,11 +49,8 @@ import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
-import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
 import com.github.lgooddatepicker.optionalusertools.DateTimeChangeListener;
-import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
 import com.github.lgooddatepicker.zinternaltools.DateTimeChangeEvent;
-import com.github.lgooddatepicker.zinternaltools.TimeSpinnerTimer;
 import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
 import com.tpbank.dbJob.WriteLogToTable;
@@ -259,7 +246,7 @@ public class AML_BOTview extends JFrame {
         return panel;
     }
 
-    private JPanel createPanelEstablish() {
+    private LocalDate createPanelEstablish() {
         SingleTaskTimer timer = new SingleTaskTimer();
         final LocalDate today = LocalDate.now();
 
@@ -272,19 +259,19 @@ public class AML_BOTview extends JFrame {
         JPanel panelRecur = new JPanel();
         JTextField textFieldRecur = new JTextField();
 
-        JCheckBox cbMonday = new JCheckBox("Monday");
+        JCheckBox cbMonday = new JCheckBox("MONDAY");
 
-        JCheckBox cbSunday = new JCheckBox("Sunday");
+        JCheckBox cbSunday = new JCheckBox("SUNDAY");
 
-        JCheckBox cbTuesday = new JCheckBox("Tuesday");
+        JCheckBox cbTuesday = new JCheckBox("TUESDAY");
 
-        JCheckBox cbWednesday = new JCheckBox("Wednesday");
+        JCheckBox cbWednesday = new JCheckBox("WEDNESDAY");
 
-        JCheckBox cbThursday = new JCheckBox("Thursday");
+        JCheckBox cbThursday = new JCheckBox("THURDAY");
 
-        JCheckBox cbFriday = new JCheckBox("Friday");
+        JCheckBox cbFriday = new JCheckBox("FRIDAY");
 
-        JCheckBox cbSaturday = new JCheckBox("Saturday");
+        JCheckBox cbSaturday = new JCheckBox("SATURDAY");
 
         JTextArea textIntervalPeriod = new JTextArea(1, 5);
 
@@ -610,8 +597,35 @@ public class AML_BOTview extends JFrame {
                 textIntervalPeriod.setEnabled(false);
                 period = Integer.parseInt(textFieldRecur.getText())*7*24*60;
             }
-            // implement the methods
+
         });
+
+        class DayInfo{
+            public DayInfo(Boolean status, String dayOfWeek) {
+                this.status = status;
+                this.dayOfWeek = dayOfWeek;
+            }
+
+            private Boolean status;
+            private String dayOfWeek;
+
+            public Boolean getStatus() {
+                return status;
+            }
+
+            public void setStatus(Boolean status) {
+                this.status = status;
+            }
+
+            public String getDayOfWeek() {
+                return dayOfWeek;
+            }
+
+            public void setDayOfWeek(String dayOfWeek) {
+                this.dayOfWeek = dayOfWeek;
+            }
+        }
+        ArrayList<DayInfo> dayInfoArrayList = new ArrayList<DayInfo>();
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cRecur, 1, 0);
@@ -619,6 +633,7 @@ public class AML_BOTview extends JFrame {
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(textFieldRecur, cRecur);
+
 
         // Label Recur everyday
         JLabel labelWeekon = new JLabel("week on");
@@ -630,53 +645,69 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(labelWeekon, cRecur);
 
         // Checkbox Sunday
-        cBDayOfWeekStatus(cbSunday);
+        boolean cbDayOfWeekStatus = false;
+        cBDayOfWeekStatus(cbSunday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbSunday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        String dayOfWeek = cbSunday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Monday
         // JCheckBox cbMonday = new JCheckBox("Monday");
-        cBDayOfWeekStatus(cbMonday);
+        cBDayOfWeekStatus(cbMonday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.WEST;
         startTimePanelPosition(cRecur, 1, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbMonday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbMonday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Tuesday
-        cBDayOfWeekStatus(cbTuesday);
+        cBDayOfWeekStatus(cbTuesday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbTuesday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbTuesday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Wednesday
-        cBDayOfWeekStatus(cbWednesday);
+        cBDayOfWeekStatus(cbWednesday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 3);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbWednesday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbWednesday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Thursday
-        cBDayOfWeekStatus(cbThursday);
+        cBDayOfWeekStatus(cbThursday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbThursday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbThursday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Friday
-        cBDayOfWeekStatus(cbFriday);
+        cBDayOfWeekStatus(cbFriday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 1);
@@ -685,15 +716,24 @@ public class AML_BOTview extends JFrame {
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbFriday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbFriday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
 
         // Checkbox Saturday
-        cBDayOfWeekStatus(cbSaturday);
+        cBDayOfWeekStatus(cbSaturday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbSaturday, cRecur);
+        //Create new dayInfo object and add to dayInfoArrayList
+        dayOfWeek = cbSaturday.getText();
+        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+
+
+
 
         // ============ panel StartTime to add Panel Setting===================
         // add Panel Setting to panel StartTime
@@ -838,8 +878,7 @@ public class AML_BOTview extends JFrame {
         return panelEstablish;
     }
 
-    private void cBDayOfWeekStatus(JCheckBox cbSunday) {
-        boolean cbSundayStatus = false;
+    private void cBDayOfWeekStatus(JCheckBox cbSunday,boolean cbSundayStatus) {
         cbSunday.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
