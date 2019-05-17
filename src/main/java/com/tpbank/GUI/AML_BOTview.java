@@ -592,8 +592,24 @@ public class AML_BOTview extends JFrame {
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(labelRecur, cRecur);
 
-        // Label Recur everyday
+        // Text Recur everyday
+        textFieldRecur.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                textIntervalPeriod.setEnabled(false);
+            }
 
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                textIntervalPeriod.setEnabled(true);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                textIntervalPeriod.setEnabled(false);
+            }
+            // implement the methods
+        });
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cRecur, 1, 0);
@@ -735,16 +751,7 @@ public class AML_BOTview extends JFrame {
 
         // Label Save textField
         JTextArea txtSaveFolder = new JTextArea(1, 20);
-        // txtSaveFolder.addPropertyChangeListener(new PropertyChangeListener()
-        // {
-        //
-        // @Override
-        // public void propertyChange(PropertyChangeEvent arg0) {
-        // btStart.setEnabled(false);
-        // btStop.setEnabled(false);
-        //
-        // }
-        // });
+
         Border blacklineTxtSaveFolder = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         txtSaveFolder.setBorder(blacklineTxtSaveFolder);
