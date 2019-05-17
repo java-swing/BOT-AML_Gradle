@@ -630,7 +630,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(labelWeekon, cRecur);
 
         // Checkbox Sunday
-
+        cBDayOfWeekStatus(cbSunday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 0);
@@ -640,6 +640,7 @@ public class AML_BOTview extends JFrame {
 
         // Checkbox Monday
         // JCheckBox cbMonday = new JCheckBox("Monday");
+        cBDayOfWeekStatus(cbMonday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.WEST;
         startTimePanelPosition(cRecur, 1, 1);
@@ -648,7 +649,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(cbMonday, cRecur);
 
         // Checkbox Tuesday
-
+        cBDayOfWeekStatus(cbTuesday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 2);
@@ -657,7 +658,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(cbTuesday, cRecur);
 
         // Checkbox Wednesday
-
+        cBDayOfWeekStatus(cbWednesday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 3);
@@ -666,7 +667,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(cbWednesday, cRecur);
 
         // Checkbox Thursday
-
+        cBDayOfWeekStatus(cbThursday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 0);
@@ -675,7 +676,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(cbThursday, cRecur);
 
         // Checkbox Friday
-
+        cBDayOfWeekStatus(cbFriday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 1);
@@ -686,7 +687,7 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(cbFriday, cRecur);
 
         // Checkbox Saturday
-
+        cBDayOfWeekStatus(cbSaturday);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 2);
@@ -835,6 +836,17 @@ public class AML_BOTview extends JFrame {
         panelEstablish.add(panelTaskControl, cEstablish);
 
         return panelEstablish;
+    }
+
+    private void cBDayOfWeekStatus(JCheckBox cbSunday) {
+        boolean cbSundayStatus = false;
+        cbSunday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean cbSundayStatus = true;
+                System.out.println(cbSunday.getText().toUpperCase()+ ": " +cbSundayStatus);
+            }
+        });
     }
 
     private void recurPanelPostion(GridBagConstraints cRecur, int i, int i2) {
