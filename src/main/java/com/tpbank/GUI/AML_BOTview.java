@@ -597,6 +597,7 @@ public class AML_BOTview extends JFrame {
             @Override
             public void insertUpdate(DocumentEvent e) {
                 textIntervalPeriod.setEnabled(false);
+                period = Integer.parseInt(textFieldRecur.getText())*7*24*60;
             }
 
             @Override
@@ -607,6 +608,7 @@ public class AML_BOTview extends JFrame {
             @Override
             public void changedUpdate(DocumentEvent e) {
                 textIntervalPeriod.setEnabled(false);
+                period = Integer.parseInt(textFieldRecur.getText())*7*24*60;
             }
             // implement the methods
         });
