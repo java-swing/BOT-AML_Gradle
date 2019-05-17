@@ -1,4 +1,4 @@
-package com.tpbank.GUI;
+package com.tpbank.GUI.TestGui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
