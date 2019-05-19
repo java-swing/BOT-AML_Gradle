@@ -41,8 +41,6 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 
-import com.tpbank.dbJob.QueryJobInMySql;
-
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
 import com.github.lgooddatepicker.components.DateTimePicker;
@@ -53,21 +51,51 @@ import com.github.lgooddatepicker.optionalusertools.DateTimeChangeListener;
 import com.github.lgooddatepicker.zinternaltools.DateTimeChangeEvent;
 import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
+import com.tpbank.dbJob.QueryJobInMySql;
 import com.tpbank.dbJob.WriteLogToTable;
 
 public class AML_BOTview extends JFrame {
 
     private String downloadFolder = defaultPathString();
     private String jtxSaveFolderStr = "";
-    private String StartDateStr = null;
-    private String EndDateStr = null;
+    private String StartDateStr = "";
+    private String EndDateStr = "";
+
+    private DateTimePicker dateTimePickerStart = new DateTimePicker();
+    private ArrayList<LocalDate> dateStartArr = new ArrayList<LocalDate>();
     static DatePicker jdStartDate;
     DatePicker jdEndDate;
     int period = 0;
 
     boolean btViewData = false;
 
-    QueryJobInMySql queryJobInMySql = new QueryJobInMySql();
+    QueryJobInMySql queryJob = new QueryJobInMySql();
+
+    class DayInfo {
+        public DayInfo(Boolean status, String dayOfWeek) {
+            this.status = status;
+            this.dayOfWeek = dayOfWeek;
+        }
+
+        private Boolean status;
+        private String dayOfWeek;
+
+        public Boolean getStatus() {
+            return status;
+        }
+
+        public void setStatus(Boolean status) {
+            this.status = status;
+        }
+
+        public String getDayOfWeek() {
+            return dayOfWeek;
+        }
+
+        public void setDayOfWeek(String dayOfWeek) {
+            this.dayOfWeek = dayOfWeek;
+        }
+    }
 
     public AML_BOTview() throws ClassNotFoundException, SQLException {
         createGUI();
@@ -131,13 +159,12 @@ public class AML_BOTview extends JFrame {
         JButton btView = createButton("Hiển thị ghi chú");
         btView.addActionListener(e -> {
             // btViewData = true;
-            QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
+            QueryJobInMySql queryJob = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
             String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             String title = "Task ID\tTask name\tFile name\tStatus";
             String log;
             try {
-                log = converteLinkedListToString(converseLogToWrite(queryJobInMySql
-                        .querryJobInMySQL()));
+                log = converteLinkedListToString(converseLogToWrite(queryJob.querryJobInMySQL()));
                 showLog.append("\t" + nameFile + " \n");
                 showLog.append(title + "\n");
                 showLog.append(log);
@@ -149,11 +176,11 @@ public class AML_BOTview extends JFrame {
         });
         JButton btExport = createButton("Xuất ra file *.pdf");
         btExport.addActionListener(e -> {
-            QueryJobInMySql queryJobInMySql = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
+            QueryJobInMySql queryJob = new QueryJobInMySql(jdStartDateRs, jdEndDateRs);
             LinkedList<String> log;
             String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             try {
-                log = queryJobInMySql.querryJobInMySQL();
+                log = queryJob.querryJobInMySQL();
 
                 Iterator<String> it = log.iterator();
                 System.out.println("Print Log in Export file");
@@ -246,7 +273,7 @@ public class AML_BOTview extends JFrame {
         return panel;
     }
 
-    private LocalDate createPanelEstablish() {
+    private JPanel createPanelEstablish() {
         SingleTaskTimer timer = new SingleTaskTimer();
         final LocalDate today = LocalDate.now();
 
@@ -343,7 +370,7 @@ public class AML_BOTview extends JFrame {
                 setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
                         cbWednesday, cbThursday, cbFriday, cbSaturday, false);
                 textIntervalPeriod.setEnabled(false);
-                period = 24*60;
+                period = 24 * 60;
             }
         });
 
@@ -357,7 +384,7 @@ public class AML_BOTview extends JFrame {
                 setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
                         cbWednesday, cbThursday, cbFriday, cbSaturday, false);
                 textIntervalPeriod.setEnabled(false);
-                period = 7*24*60;
+                period = 7 * 24 * 60;
             }
         });
 
@@ -371,7 +398,7 @@ public class AML_BOTview extends JFrame {
                 setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
                         cbWednesday, cbThursday, cbFriday, cbSaturday, false);
                 textIntervalPeriod.setEnabled(false);
-                period = 30*24*60;
+                period = 30 * 24 * 60;
             }
         });
 
@@ -424,8 +451,8 @@ public class AML_BOTview extends JFrame {
         // add label Start to Panel StartTime:
         TimePickerSettings timePickerSettingsStart = new TimePickerSettings();
         DatePickerSettings datePickerSettingsStart = new DatePickerSettings();
-        DateTimePicker dateTimePickerStart = new DateTimePicker(
-                datePickerSettingsStart, timePickerSettingsStart);
+        dateTimePickerStart = new DateTimePicker(datePickerSettingsStart,
+                timePickerSettingsStart);
         datePickerSettingsStart.setDateRangeLimits(today.minusDays(0),
                 today.plusDays(3000));
         DatePickerSettings dateSettingsEndDatePicker = new DatePickerSettings();
@@ -580,52 +607,30 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(labelRecur, cRecur);
 
         // Text Recur everyday
-        textFieldRecur.getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                textIntervalPeriod.setEnabled(false);
-                period = Integer.parseInt(textFieldRecur.getText())*7*24*60;
-            }
+        textFieldRecur.getDocument().addDocumentListener(
+                new DocumentListener() {
+                    @Override
+                    public void insertUpdate(DocumentEvent e) {
+                        textIntervalPeriod.setEnabled(false);
+                        period = Integer.parseInt(textFieldRecur.getText()) * 7 * 24 * 60;
+                        setRadioButtonStatus(r1, r2, r3, r4, false);
+                    }
 
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                textIntervalPeriod.setEnabled(true);
-            }
+                    @Override
+                    public void removeUpdate(DocumentEvent e) {
+                        textIntervalPeriod.setEnabled(true);
+                        setRadioButtonStatus(r1, r2, r3, r4, true);
+                    }
 
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                textIntervalPeriod.setEnabled(false);
-                period = Integer.parseInt(textFieldRecur.getText())*7*24*60;
-            }
+                    @Override
+                    public void changedUpdate(DocumentEvent e) {
+                        textIntervalPeriod.setEnabled(false);
+                        period = Integer.parseInt(textFieldRecur.getText()) * 7 * 24 * 60;
+                        setRadioButtonStatus(r1, r2, r3, r4, false);
+                    }
 
-        });
+                });
 
-        class DayInfo{
-            public DayInfo(Boolean status, String dayOfWeek) {
-                this.status = status;
-                this.dayOfWeek = dayOfWeek;
-            }
-
-            private Boolean status;
-            private String dayOfWeek;
-
-            public Boolean getStatus() {
-                return status;
-            }
-
-            public void setStatus(Boolean status) {
-                this.status = status;
-            }
-
-            public String getDayOfWeek() {
-                return dayOfWeek;
-            }
-
-            public void setDayOfWeek(String dayOfWeek) {
-                this.dayOfWeek = dayOfWeek;
-            }
-        }
-        ArrayList<DayInfo> dayInfoArrayList = new ArrayList<DayInfo>();
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cRecur, 1, 0);
@@ -633,7 +638,6 @@ public class AML_BOTview extends JFrame {
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(textFieldRecur, cRecur);
-
 
         // Label Recur everyday
         JLabel labelWeekon = new JLabel("week on");
@@ -645,69 +649,88 @@ public class AML_BOTview extends JFrame {
         panelRecur.add(labelWeekon, cRecur);
 
         // Checkbox Sunday
-        boolean cbDayOfWeekStatus = false;
-        cBDayOfWeekStatus(cbSunday,cbDayOfWeekStatus);
+
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbSunday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        String dayOfWeek = cbSunday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbSunday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbSunday.isSelected()) {
+                    cBDayOfWeekStatus(cbSunday, cbSunday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Monday
         // JCheckBox cbMonday = new JCheckBox("Monday");
-        cBDayOfWeekStatus(cbMonday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.WEST;
         startTimePanelPosition(cRecur, 1, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbMonday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbMonday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbMonday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbMonday.isSelected()) {
+                    cBDayOfWeekStatus(cbMonday, cbMonday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Tuesday
-        cBDayOfWeekStatus(cbTuesday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbTuesday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbTuesday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbTuesday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbTuesday.isSelected()) {
+                    cBDayOfWeekStatus(cbTuesday, cbTuesday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Wednesday
-        cBDayOfWeekStatus(cbWednesday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 3);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbWednesday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbWednesday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbWednesday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbWednesday.isSelected()) {
+                    cBDayOfWeekStatus(cbWednesday, cbWednesday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Thursday
-        cBDayOfWeekStatus(cbThursday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbThursday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbThursday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbThursday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbThursday.isSelected()) {
+                    cBDayOfWeekStatus(cbThursday, cbThursday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Friday
-        cBDayOfWeekStatus(cbFriday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 1);
@@ -716,24 +739,30 @@ public class AML_BOTview extends JFrame {
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbFriday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbFriday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
+        cbFriday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbFriday.isSelected()) {
+                    cBDayOfWeekStatus(cbFriday, cbFriday.isSelected());
+                }
+            }
+        });
 
         // Checkbox Saturday
-        cBDayOfWeekStatus(cbSaturday,cbDayOfWeekStatus);
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(0, 10, 0, 0);
         panelRecur.add(cbSaturday, cRecur);
-        //Create new dayInfo object and add to dayInfoArrayList
-        dayOfWeek = cbSaturday.getText();
-        dayInfoArrayList.add(new DayInfo(cbDayOfWeekStatus,dayOfWeek));
-
-
-
+        cbSaturday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbSaturday.isSelected()) {
+                    cBDayOfWeekStatus(cbSaturday, cbSaturday.isSelected());
+                }
+            }
+        });
 
         // ============ panel StartTime to add Panel Setting===================
         // add Panel Setting to panel StartTime
@@ -794,7 +823,26 @@ public class AML_BOTview extends JFrame {
 
         // Label Save textField
         JTextArea txtSaveFolder = new JTextArea(1, 20);
+        txtSaveFolder.getDocument().addDocumentListener(new DocumentListener() {
 
+            @Override
+            public void removeUpdate(DocumentEvent arg0) {
+                btStart.setEnabled(false);
+                btStop.setEnabled(false);
+            }
+
+            @Override
+            public void insertUpdate(DocumentEvent arg0) {
+                btStart.setEnabled(true);
+                btStop.setEnabled(true);
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent arg0) {
+                btStart.setEnabled(true);
+                btStop.setEnabled(true);
+            }
+        });
         Border blacklineTxtSaveFolder = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         txtSaveFolder.setBorder(blacklineTxtSaveFolder);
@@ -818,9 +866,9 @@ public class AML_BOTview extends JFrame {
 
         // ======== panel panelTaskControl=========================
         btStart.addActionListener(e -> {
-
             actionBtnStart(timer, textIntervalPeriod, dateTimePickerStart,
-                    dateTimePickerStop, txtSaveFolder);
+                    dateTimePickerStop, txtSaveFolder, textFieldRecur,
+                    dateStartArr);
         });
         cTaskControl.fill = GridBagConstraints.HORIZONTAL;
         taskControlPanelPosition(cTaskControl, 1, 0);
@@ -878,14 +926,21 @@ public class AML_BOTview extends JFrame {
         return panelEstablish;
     }
 
-    private void cBDayOfWeekStatus(JCheckBox cbSunday,boolean cbSundayStatus) {
-        cbSunday.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                boolean cbSundayStatus = true;
-                System.out.println(cbSunday.getText().toUpperCase()+ ": " +cbSundayStatus);
+    private void cBDayOfWeekStatus(JCheckBox cbox, boolean cbStatus) {
+        System.out.println(cbox.getText().toUpperCase() + ": "
+                + cbStatus);
+        // Create new dayInfo object and add to dayInfoArrayList
+        String dayOfWeek = cbox.getText();
+//				ArrayList<DayInfo> dayInfoArrayList = new ArrayList<DayInfo>();
+//				dayInfoArrayList.add(new DayInfo(cbStatus, dayOfWeek));
+        String dateStr = dateTimePickerStart.getDatePicker().getDate()
+                .getDayOfWeek().toString();
+        if (cbStatus == true) {
+            if (dayOfWeek.equals(dateStr)) {
+                dateStartArr.add(dateTimePickerStart.getDatePicker()
+                        .getDate());
             }
-        });
+        }
     }
 
     private void recurPanelPostion(GridBagConstraints cRecur, int i, int i2) {
@@ -893,22 +948,26 @@ public class AML_BOTview extends JFrame {
         cRecur.ipadx = i2;
     }
 
-    private void settingPanelWidthAndHeight(GridBagConstraints cSetting, int i, int i2) {
+    private void settingPanelWidthAndHeight(GridBagConstraints cSetting, int i,
+                                            int i2) {
         cSetting.gridwidth = i;
         cSetting.gridheight = i2;
     }
 
-    private void taskControlPanelPosition(GridBagConstraints cTaskControl, int i, int i2) {
+    private void taskControlPanelPosition(GridBagConstraints cTaskControl,
+                                          int i, int i2) {
         cTaskControl.ipadx = i; // reset to default
         cTaskControl.ipady = i2; // reset to default
     }
 
-    private void startTimePanelPosition(GridBagConstraints cStartTime, int i, int i2) {
+    private void startTimePanelPosition(GridBagConstraints cStartTime, int i,
+                                        int i2) {
         cStartTime.gridy = i;
         cStartTime.gridx = i2;
     }
 
-    private void intervalSimplePanelPosition(GridBagConstraints cIntervalSimple, int i, int i2) {
+    private void intervalSimplePanelPosition(
+            GridBagConstraints cIntervalSimple, int i, int i2) {
         cIntervalSimple.gridx = i;
         cIntervalSimple.gridy = i2;
     }
@@ -1159,14 +1218,39 @@ public class AML_BOTview extends JFrame {
 
     private void actionBtnStart(SingleTaskTimer timer,
                                 JTextArea textIntervalPeriod, DateTimePicker dateTimePickerStart,
-                                DateTimePicker dateTimePickerStop, JTextArea txtSaveFolder) {
+                                DateTimePicker dateTimePickerStop, JTextArea txtSaveFolder,
+                                JTextField txtRecur, ArrayList<LocalDate> dateStartArr) {
         Calendar calEnd = calendarFromPickers(
                 dateTimePickerStop.getDatePicker(),
                 dateTimePickerStop.getTimePicker());
         Calendar calStart = calendarFromPickers(
                 dateTimePickerStart.getDatePicker(),
                 dateTimePickerStart.getTimePicker());
-        period = Integer.parseInt(textIntervalPeriod.getText());
+        if (dateStartArr.size() > 0) {
+            for (LocalDate date : dateStartArr) {
+                calStart = Calendar.getInstance();
+                calStart.set(date.getYear(), date.getMonthValue() - 1,
+                        date.getDayOfMonth());
+                System.out.println(calStart.toString());
+                saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
+                        calEnd, calStart);
+            }
+        }
+        else {
+            saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
+                    calEnd, calStart);
+        }
+    }
+
+    private void saveFile(SingleTaskTimer timer, JTextArea textIntervalPeriod,
+                          JTextArea txtSaveFolder, JTextField txtRecur, Calendar calEnd,
+                          Calendar calStart) {
+        if (!textIntervalPeriod.getText().isEmpty()) {
+            period = Integer.parseInt(textIntervalPeriod.getText());
+        } else if (!txtRecur.getText().isEmpty()) {
+            period = Integer.parseInt(txtRecur.getText()) * 7 * 24 * 60;
+        }
+        System.out.println(period);
         long timePeriod = TimeUnit.MILLISECONDS.convert(period,
                 TimeUnit.MINUTES);
         // add and validate Download folder
@@ -1178,5 +1262,6 @@ public class AML_BOTview extends JFrame {
         timer.setTask(new StartTask(downloadFolder));
         timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
     }
+
 
 }
