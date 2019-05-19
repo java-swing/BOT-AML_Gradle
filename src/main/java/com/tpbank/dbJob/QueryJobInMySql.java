@@ -25,7 +25,7 @@ public class QueryJobInMySql {
         MySQLConnUtils conn = new MySQLConnUtils();
 
         // Lấy ra đối tượng Connection kết nối vào DB.
-        Connection connection = MySQLConnUtils.getMySQLConnection();
+        Connection connection = MySQLConnUtils.getMySQLConnectionToGetLog();
 
         // Tạo đối tượng Statement.
         Statement statement = connection.createStatement();

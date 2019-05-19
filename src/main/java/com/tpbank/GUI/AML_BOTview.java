@@ -449,7 +449,8 @@ public class AML_BOTview extends JFrame {
         panelStartTime.add(startLb, cStartTime);
 
         // add label Start to Panel StartTime:
-        TimePickerSettings timePickerSettingsStart = new TimePickerSettings();
+        Locale engLocaleLocale = new Locale("en");
+        TimePickerSettings timePickerSettingsStart = new TimePickerSettings(engLocaleLocale);
         DatePickerSettings datePickerSettingsStart = new DatePickerSettings();
         dateTimePickerStart = new DateTimePicker(datePickerSettingsStart,
                 timePickerSettingsStart);
@@ -500,7 +501,7 @@ public class AML_BOTview extends JFrame {
         panelStartTime.add(stopLb, cStartTime);
 
         // DateTime Strop
-        TimePickerSettings timeSettings = new TimePickerSettings();
+        TimePickerSettings timeSettings = new TimePickerSettings(engLocaleLocale);
 
         DateTimePicker dateTimePickerStop = new DateTimePicker(
                 dateSettingsEndDatePicker, timeSettings);
@@ -1235,8 +1236,7 @@ public class AML_BOTview extends JFrame {
                 saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
                         calEnd, calStart);
             }
-        }
-        else {
+        } else {
             saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
                     calEnd, calStart);
         }
