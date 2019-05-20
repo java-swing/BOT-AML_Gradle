@@ -1,4 +1,4 @@
-package com.tpbank.dbJob;
+package com.tpbank.writeToPdf;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -10,12 +10,8 @@ import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.PDPage;
 import org.apache.pdfbox.pdmodel.PDPageContentStream;
 import org.apache.pdfbox.pdmodel.common.PDRectangle;
-import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDSimpleFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
-
-
-import javax.xml.soap.Node;
 
 public class WriteLogToPdf {
 

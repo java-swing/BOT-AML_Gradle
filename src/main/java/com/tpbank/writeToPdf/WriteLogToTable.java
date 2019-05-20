@@ -1,9 +1,6 @@
-package com.tpbank.dbJob;
+package com.tpbank.writeToPdf;
 
-import java.awt.Color;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -14,8 +11,6 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import be.quodlibet.boxable.*;
-import be.quodlibet.boxable.line.LineStyle;
-import be.quodlibet.boxable.text.WrappingFunction;
 
 public class WriteLogToTable {
 	private LinkedList<String> logLinkedList;

@@ -8,20 +8,20 @@ import java.sql.SQLException;
 import java.sql.Statement;
 import java.util.LinkedList;
 
-public class QueryJobInMySql {
+public class QueryJobToExportLog {
     private DatePicker jdStartDateRs2;
     private DatePicker jdEndDateRs2;
 
-    public QueryJobInMySql() {
+    public QueryJobToExportLog() {
     }
 
-    public QueryJobInMySql(DatePicker jdStartDateRs2, DatePicker jdEndDateRs2) {
+    public QueryJobToExportLog(DatePicker jdStartDateRs2, DatePicker jdEndDateRs2) {
         this.jdStartDateRs2 = jdStartDateRs2;
         this.jdEndDateRs2 = jdEndDateRs2;
     }
 
     //    @Override
-    public LinkedList<String> querryJobInMySQL() throws ClassNotFoundException, SQLException {
+    public LinkedList<String> createQueryJobToExportLog() throws ClassNotFoundException, SQLException {
         MySQLConnUtils conn = new MySQLConnUtils();
 
         // Lấy ra đối tượng Connection kết nối vào DB.
@@ -63,7 +63,7 @@ public class QueryJobInMySql {
 
         }
 
-        System.out.println("finish at QueryJobInMySql" + log);
+        System.out.println("finish at QueryJobToExportLog" + log);
         // Đóng kết nối
         connection.close();
         return logLinkedList;
