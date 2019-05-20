@@ -92,6 +92,7 @@ public class AML_BOTview extends JFrame {
     String StartTimeStr;
     String EndDateStr;
     String EndTimeStr;
+    ArrayList<String> loadingLast = new ArrayList<String>();
 
     QueryJobToExportLog queryJob = new QueryJobToExportLog();
 
@@ -315,7 +316,7 @@ public class AML_BOTview extends JFrame {
         GridBagLayout layoutEstablish = new GridBagLayout();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        panelEstablish.setBounds(0, 0, screenSize.width/2, screenSize.height/2);
+        panelEstablish.setBounds(0, 0, screenSize.width / 2, screenSize.height / 2);
 
         panelEstablish.setLayout(layoutEstablish);
         Border blacklineEstablishPanel = BorderFactory.createTitledBorder("");
@@ -343,7 +344,7 @@ public class AML_BOTview extends JFrame {
 
 //		JTextArea textIntervalPeriod = new JTextArea(1, 5);
         JSpinner textIntervalPeriod = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
-        textIntervalPeriod.setBorder( null );
+        textIntervalPeriod.setBorder(null);
         textFieldRecur.setEnabled(false);
         textIntervalPeriod.setEnabled(false);
         setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday, cbWednesday,
@@ -607,7 +608,7 @@ public class AML_BOTview extends JFrame {
             }
         });
 //		(
-//				new DocumentListener() {
+//				new documentlistener() {
 //
 //					@Override
 //					public void removeUpdate(DocumentEvent arg0) {
@@ -917,54 +918,39 @@ public class AML_BOTview extends JFrame {
         cSaveSetting.insets = new Insets(5, 10, 10, 0);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
 
-        // Option Save Folder button=========================>>>>>>>>>>>
-        // JButton btsaveFolder = createButton("SAVE FOLDER");
-        // btsaveFolder.addActionListener(e -> setDownloadFolder());
-        // cSaveSetting.fill = GridBagConstraints.FIRST_LINE_START;
-        // startTimePanelPosition(cSaveSetting, 0, 2);
-        // cSaveSetting.anchor = GridBagConstraints.LINE_START; // bottom of
-        // // space
-        // cSaveSetting.insets = new Insets(5, 10, 10, 0);
-        // panelSaveSetting.add(btsaveFolder, cSaveSetting);
-
-        // ======== panel panelTaskControl=========================
-        // jrdOneTime = r1.isSelected();
-        // jrdDaily = r2.isSelected();
-        // jrdWeekly = r3.isSelected();
-        // jrdMonthly = r4.isSelected();
-        //
-        // if(textIntervalPeriod.getText()!=null){
-        // intevalPeriod = Integer.parseInt(textIntervalPeriod.getText());
-        // }else{
-        // intevalPeriod = -1;
-        // }
-        //
-        // if(textFieldRecur.getText()!=null){
-        // recur = Integer.parseInt(textFieldRecur.getText());
-        // }else{
-        // recur = -1;
-        // }
-        //
-        // jcbSundayStatus = cbSunday.isSelected();
-        // jcbMondayStatus = cbMonday.isSelected();
-        // jcbTuesdayStatus =cbTuesday.isSelected();
-        // jcbWednesdayStatus =cbWednesday.isSelected();
-        // jcbThurdayStatus =cbThursday.isSelected();
-        // jcbFridayStatus =cbFriday.isSelected();
-        // jcbSaturStatus =cbSaturday.isSelected();
-        // System.out.println("jrdOneTime " + jrdOneTime);
-        // System.out.println("jrdDaily "+ jrdDaily);
-        // System.out.println("jrdWeekly "+ jrdWeekly);
-        // System.out.println("jrdMonthly " +jrdMonthly);
-        // System.out.println("intevalPeriod " + intevalPeriod);
-        // System.out.println("recur " + recur);
-        // System.out.println("jcbSundayStatus "+ jcbSundayStatus);
-        // System.out.println("jcbMondayStatus "+ jcbMondayStatus);
-        // System.out.println("jcbTuesdayStatus "+ jcbTuesdayStatus);
-        // System.out.println("jcbWednesdayStatus "+ jcbWednesdayStatus);
-        // System.out.println("jcbThurdayStatus "+ jcbThurdayStatus);
-        // System.out.println("jcbFridayStatus " +jcbFridayStatus);
-        // System.out.println("jcbSaturStatus "+ jcbSaturStatus);
+//         ======== panel panelTaskControl=========================
+        loadingLast  = readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
+//
+//         r1.setEnabled(loadingLast.get(0));
+//         jrdDaily = r2.isSelected();
+//
+//
+//         if(textIntervalPeriod.getText()!=null){
+//         intevalPeriod = Integer.parseInt(textIntervalPeriod.getText());
+//         }else{
+//         intevalPeriod = -1;
+//         }
+//
+//         jcbSundayStatus = cbSunday.isSelected();
+//         jcbMondayStatus = cbMonday.isSelected();
+//         jcbTuesdayStatus =cbTuesday.isSelected();
+//         jcbWednesdayStatus =cbWednesday.isSelected();
+//         jcbThurdayStatus =cbThursday.isSelected();
+//         jcbFridayStatus =cbFriday.isSelected();
+//         jcbSaturStatus =cbSaturday.isSelected();
+//         System.out.println("jrdOneTime " + jrdOneTime);
+//         System.out.println("jrdDaily "+ jrdDaily);
+//         System.out.println("jrdWeekly "+ jrdWeekly);
+//         System.out.println("jrdMonthly " +jrdMonthly);
+//         System.out.println("intevalPeriod " + intevalPeriod);
+//         System.out.println("recur " + recur);
+//         System.out.println("jcbSundayStatus "+ jcbSundayStatus);
+//         System.out.println("jcbMondayStatus "+ jcbMondayStatus);
+//         System.out.println("jcbTuesdayStatus "+ jcbTuesdayStatus);
+//         System.out.println("jcbWednesdayStatus "+ jcbWednesdayStatus);
+//         System.out.println("jcbThurdayStatus "+ jcbThurdayStatus);
+//         System.out.println("jcbFridayStatus " +jcbFridayStatus);
+//         System.out.println("jcbSaturStatus "+ jcbSaturStatus);
 
         btSaveSetting
                 .addActionListener(e -> {
@@ -994,29 +980,31 @@ public class AML_BOTview extends JFrame {
                     EndTimeStr = dateTimePickerStop.getTimePicker().getTime()
                             .toString();
 
-                    System.out.println("jrdOneTime " + jrdOneTime);
-                    System.out.println("jrdDaily " + jrdDaily);
+                    System.out.println("1. jrdOneTime " + jrdOneTime);
+                    System.out.println("2. jrdDaily " + jrdDaily);
 
-                    System.out.println("StartDateStr " + StartDateStr);
-                    System.out.println("StartTimeStr " + StartTimeStr);
-                    System.out.println("EndDateStr " + EndDateStr);
-                    System.out.println("EndTimeStr " + EndTimeStr);
-                    System.out.println("saveFile " + saveFile);
-                    System.out.println("intevalPeriod " + intevalPeriod);
-                    System.out.println("jcbSundayStatus " + jcbSundayStatus);
-                    System.out.println("jcbMondayStatus " + jcbMondayStatus);
-                    System.out.println("jcbTuesdayStatus " + jcbTuesdayStatus);
-                    System.out.println("jcbWednesdayStatus "
+                    System.out.println("3. StartDateStr " + StartDateStr);
+                    System.out.println("4. StartTimeStr " + StartTimeStr);
+                    System.out.println("5. EndDateStr " + EndDateStr);
+                    System.out.println("6. EndTimeStr " + EndTimeStr);
+                    System.out.println("7. saveFile " + saveFile);
+                    System.out.println("8. intevalPeriod " + intevalPeriod);
+                    System.out.println("9. jcbSundayStatus " + jcbSundayStatus);
+                    System.out.println("10. jcbMondayStatus " + jcbMondayStatus);
+                    System.out.println("11. jcbTuesdayStatus " + jcbTuesdayStatus);
+                    System.out.println("12. jcbWednesdayStatus "
                             + jcbWednesdayStatus);
-                    System.out.println("jcbThurdayStatus " + jcbThurdayStatus);
-                    System.out.println("jcbFridayStatus " + jcbFridayStatus);
-                    System.out.println("jcbSaturStatus " + jcbSaturStatus);
+                    System.out.println("13. jcbThurdayStatus " + jcbThurdayStatus);
+                    System.out.println("14. jcbFridayStatus " + jcbFridayStatus);
+                    System.out.println("15. jcbSaturStatus " + jcbSaturStatus);
                     System.out
-                            .println("===========================================================================================");
-                    String saveString = jrdOneTime + "@" + jrdDaily + "@" + StartDateStr + "@ " + StartTimeStr+
+                            .println("===================================Save String ===================================");
+                    String saveString = jrdOneTime + "@" + jrdDaily + "@" + StartDateStr + "@ " + StartTimeStr +
                             "@" + EndDateStr + "@" + EndTimeStr + "@" + saveFile + "@" + intevalPeriod + "@" + jcbSundayStatus +
-                            "/" + jcbMondayStatus + "/"+ jcbTuesdayStatus + "@"+ jcbWednesdayStatus + "@"+ jcbThurdayStatus +
-                            "@" + jcbFridayStatus + "@"+ jcbSaturStatus;
+                            "/" + jcbMondayStatus + "/" + jcbTuesdayStatus + "@" + jcbWednesdayStatus + "@" + jcbThurdayStatus +
+                            "@" + jcbFridayStatus + "@" + jcbSaturStatus;
+                    System.out.println(jrdOneTime);
+                    System.out.println(jrdDaily);
                     SaveEstablishInTxtFile newSaveFile = new SaveEstablishInTxtFile(saveString);
                     newSaveFile.saveTextEstablish(saveString);
 //                    try {
@@ -1025,7 +1013,7 @@ public class AML_BOTview extends JFrame {
 //                        // TODO Auto-generated catch block
 //                        e1.printStackTrace();
 //                    }
-                    readAllFileAndSplit("SaveEstablishText/saveEstablish.txt");
+                    readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
                 });
         cTaskControl.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cTaskControl, 0, 0);
@@ -1431,68 +1419,27 @@ public class AML_BOTview extends JFrame {
         timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
     }
 
-//    private void saveRecentEstablishTabStatus(Boolean oneTime, Boolean daily,
-//                                              Boolean weekly, Boolean monthly, String startDateStr2,
-//                                              String startTimeStr2, String endDateStr2, String endTimeStr2,
-//                                              Integer intevalPeriod, Integer recur, Boolean sundayStatus,
-//                                              Boolean mondayStatus, Boolean tuesdayStatus,
-//                                              Boolean wednesdayStatus, Boolean thurdayStatus,
-//                                              Boolean fridayStatus, Boolean saturStatus)
-//            throws ClassNotFoundException, SQLException {
-//        QueryJobToImportRecentStatus queryImportStatus = new QueryJobToImportRecentStatus(
-//                oneTime, daily, weekly, monthly, startDateStr2, startTimeStr2,
-//                endDateStr2, endTimeStr2, intevalPeriod, recur, sundayStatus,
-//                mondayStatus, tuesdayStatus, wednesdayStatus, thurdayStatus,
-//                fridayStatus, saturStatus);
-//        queryImportStatus.createQueryJobToImportStatus();
-//    }
-
-//    private void ReadFileAndSplit() throws Exception {
-//        // We need to provide file path as the parameter:
-//        // double backquote is to avoid compiler interpret words
-//        // like \test as \t (ie. as a escape sequence)
-//        File file = new File("SaveEstablishText/saveEstablish.txt");
-//
-//        BufferedReader br = new BufferedReader(new FileReader(file));
-//
-//        String st;
-//
-//        System.out
-//                .println("=====================================================");
-//
-//        if (br.readLine() != null){
-//            st = br.readLine();
-//            System.out.println("String origin");
-//            System.out.println(br.readLine());
-//        }
-//        System.out.println("String has split by \"@\" ");
-//        while ((st = br.readLine()) != null) {
-//            String s1 = st;
-//            String[] words = br.readLine().split("@");
-//            for (String w : words) {
-//                System.out.println(w);
-//            }
-//        }
-//    }
-
-    private static String readAllFileAndSplit(String filePath)
-    {
+    private static ArrayList<String> readAllFileAndSaveToArr(String filePath) {
+        ArrayList<String> statusArr = new ArrayList<String>();
         String content = "";
 
-        try
-        {
-            content = new String ( Files.readAllBytes( Paths.get(filePath) ) );
-        }
-        catch (IOException e)
-        {
+        try {
+            content = new String(Files.readAllBytes(Paths.get(filePath)));
+        } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.println("=============================Reader String ===================================");
+        System.out.println(content);
+        System.out.println("==============================================================================");
+        String[] arrOfStr = content.split("@", 15);
+        int i = 1;
+        for (String a : arrOfStr) {
 
-        String[] arrOfStr = content.split("@", 50);
-
-        for (String a : arrOfStr)
-            System.out.println(a);
-        return content;
+            statusArr.add(a);
+            System.out.println(i + " " +a);
+            i++;
+        }
+        return statusArr;
     }
 }
 
