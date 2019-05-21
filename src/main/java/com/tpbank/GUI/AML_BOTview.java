@@ -464,20 +464,6 @@ public class AML_BOTview extends JFrame {
         cIntervalSimple.insets = new Insets(10, 10, 20, 0);
         panelIntervalSimple.add(r2, cIntervalSimple);
 
-        // RadioButton "Weekly"
-        // cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
-        // intervalSimplePanelPosition(cIntervalSimple, 0, 2);
-        // cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
-        // cIntervalSimple.insets = new Insets(10, 10, 0, 0);
-        // // panelIntervalSimple.add(r3, cIntervalSimple);
-        //
-        // // RadioButton "Monthly"
-        // cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
-        // intervalSimplePanelPosition(cIntervalSimple, 0, 3);
-        // cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
-        // cIntervalSimple.insets = new Insets(10, 10, 0, 0);
-        // panelIntervalSimple.add(r4, cIntervalSimple);
-
         // =======Start Time=====================
         // Panel StartTime
         JPanel panelStartTime = new JPanel();
@@ -497,6 +483,7 @@ public class AML_BOTview extends JFrame {
 
         // add label Start to Panel StartTime:
         TimePickerSettings timePickerSettingsStart = new TimePickerSettings();
+        timePickerSettingsStart.setInitialTimeToNow();
         DatePickerSettings datePickerSettingsStart = new DatePickerSettings();
         dateTimePickerStart = new DateTimePicker(datePickerSettingsStart,
                 timePickerSettingsStart);
@@ -547,10 +534,10 @@ public class AML_BOTview extends JFrame {
         panelStartTime.add(stopLb, cStartTime);
 
         // DateTime Strop
-        TimePickerSettings timeSettings = new TimePickerSettings();
-
+        TimePickerSettings timeStopSettings = new TimePickerSettings();
+        timeStopSettings.setInitialTimeToNow();
         DateTimePicker dateTimePickerStop = new DateTimePicker(
-                dateSettingsEndDatePicker, timeSettings);
+                dateSettingsEndDatePicker, timeStopSettings);
         dateTimePickerStop.setEnabled(false);
         dateTimePickerStart
                 .addDateTimeChangeListener(new DateTimeChangeListener() {
@@ -598,38 +585,17 @@ public class AML_BOTview extends JFrame {
         Border blacklineIntervalPeriod = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         textIntervalPeriod.setBorder(blacklineIntervalPeriod);
-//		textIntervalPeriod.getDocument().addDocumentListener(
         textIntervalPeriod.addChangeListener(new ChangeListener() {
 
             @Override
             public void stateChanged(ChangeEvent arg0) {
-                setRadioButtonStatus(r1, r2, r3, r4, false);
-
+                if(!textIntervalPeriod.getValue().equals(0)) {
+                    setRadioButtonStatus(r1, r2, r3, r4, false);
+                }else {
+                    setRadioButtonStatus(r1, r2, r3, r4, true);
+                }
             }
         });
-//		(
-//				new documentlistener() {
-//
-//					@Override
-//					public void removeUpdate(DocumentEvent arg0) {
-//						textFieldRecur.setEnabled(true);
-//						setRadioButtonStatus(r1, r2, r3, r4, true);
-//					}
-//
-//					@Override
-//					public void insertUpdate(DocumentEvent arg0) {
-//						textFieldRecur.setEnabled(false);
-//						setRadioButtonStatus(r1, r2, r3, r4, false);
-//
-//					}
-//
-//					@Override
-//					public void changedUpdate(DocumentEvent arg0) {
-//						textFieldRecur.setEnabled(false);
-//						setRadioButtonStatus(r1, r2, r3, r4, false);
-//					}
-//				});
-
 
         cInterval.fill = GridBagConstraints.CENTER;
         taskControlPanelPosition(cInterval, 0, 0);
@@ -657,58 +623,6 @@ public class AML_BOTview extends JFrame {
         Border blacklineRecur = BorderFactory.createTitledBorder("");
         panelRecur.setBorder(blacklineRecur);
         panelRecur.setBackground(Color.white);
-        // Label Recur everyday
-        // JLabel labelRecur = new JLabel("Recur every: ");
-        // taskControlPanelPosition(cRecur, 0, 0);
-        // cRecur.fill = GridBagConstraints.HORIZONTAL;
-        // intervalSimplePanelPosition(cRecur, 0, 0);
-        // cRecur.anchor = GridBagConstraints.LINE_START;
-        // cRecur.insets = new Insets(0, 10, 0, 0);
-        // panelRecur.add(labelRecur, cRecur);
-
-        // Text Recur everyday
-        // textFieldRecur.getDocument().addDocumentListener(
-        // new DocumentListener() {
-        // @Override
-        // public void insertUpdate(DocumentEvent e) {
-        // textIntervalPeriod.setEnabled(false);
-        // period = Integer.parseInt(textFieldRecur.getText()) * 7 * 24 * 60;
-        // setRadioButtonStatus(r1, r2, r3, r4, false);
-        // }
-        //
-        // @Override
-        // public void removeUpdate(DocumentEvent e) {
-        // textIntervalPeriod.setEnabled(true);
-        // setRadioButtonStatus(r1, r2, r3, r4, true);
-        // }
-        //
-        // @Override
-        // public void changedUpdate(DocumentEvent e) {
-        // textIntervalPeriod.setEnabled(false);
-        // period = Integer.parseInt(textFieldRecur.getText()) * 7 * 24 * 60;
-        // setRadioButtonStatus(r1, r2, r3, r4, false);
-        // }
-        //
-        // });
-        //
-        // taskControlPanelPosition(cRecur, 0, 0);
-        // cRecur.fill = GridBagConstraints.HORIZONTAL;
-        // intervalSimplePanelPosition(cRecur, 1, 0);
-        // recurPanelPostion(cRecur, 0, 20);
-        // cRecur.anchor = GridBagConstraints.LINE_START;
-        // cRecur.insets = new Insets(0, 10, 0, 0);
-        // panelRecur.add(textFieldRecur, cRecur);
-
-        // Label Recur everyday
-        // JLabel labelWeekon = new JLabel("week on");
-        // cRecur.fill = GridBagConstraints.HORIZONTAL;
-        // taskControlPanelPosition(cRecur, 0, 0);
-        // intervalSimplePanelPosition(cRecur, 2, 0);
-        // cRecur.anchor = GridBagConstraints.LINE_START;
-        // cRecur.insets = new Insets(0, 10, 0, 0);
-        // panelRecur.add(labelWeekon, cRecur);
-
-        // Checkbox Sunday
 
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
@@ -919,38 +833,8 @@ public class AML_BOTview extends JFrame {
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
 
 //         ======== panel panelTaskControl=========================
-        loadingLast  = readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
-//
-//         r1.setEnabled(loadingLast.get(0));
-//         jrdDaily = r2.isSelected();
-//
-//
-//         if(textIntervalPeriod.getText()!=null){
-//         intevalPeriod = Integer.parseInt(textIntervalPeriod.getText());
-//         }else{
-//         intevalPeriod = -1;
-//         }
-//
-//         jcbSundayStatus = cbSunday.isSelected();
-//         jcbMondayStatus = cbMonday.isSelected();
-//         jcbTuesdayStatus =cbTuesday.isSelected();
-//         jcbWednesdayStatus =cbWednesday.isSelected();
-//         jcbThurdayStatus =cbThursday.isSelected();
-//         jcbFridayStatus =cbFriday.isSelected();
-//         jcbSaturStatus =cbSaturday.isSelected();
-//         System.out.println("jrdOneTime " + jrdOneTime);
-//         System.out.println("jrdDaily "+ jrdDaily);
-//         System.out.println("jrdWeekly "+ jrdWeekly);
-//         System.out.println("jrdMonthly " +jrdMonthly);
-//         System.out.println("intevalPeriod " + intevalPeriod);
-//         System.out.println("recur " + recur);
-//         System.out.println("jcbSundayStatus "+ jcbSundayStatus);
-//         System.out.println("jcbMondayStatus "+ jcbMondayStatus);
-//         System.out.println("jcbTuesdayStatus "+ jcbTuesdayStatus);
-//         System.out.println("jcbWednesdayStatus "+ jcbWednesdayStatus);
-//         System.out.println("jcbThurdayStatus "+ jcbThurdayStatus);
-//         System.out.println("jcbFridayStatus " +jcbFridayStatus);
-//         System.out.println("jcbSaturStatus "+ jcbSaturStatus);
+//        loadingLast  = readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
+
 
         btSaveSetting
                 .addActionListener(e -> {
@@ -1255,20 +1139,19 @@ public class AML_BOTview extends JFrame {
             LinkedList<String> logLinkedList) {
         LinkedList<String> linkedExp = new LinkedList<String>();
         ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
-        ArrayList<String> listExp = new ArrayList<String>();
 
         int i = 0;
-        while (i <= listRaw.size() - 4) {
-            String valueId = listRaw.get(i);
-            String valueTaskName = listRaw.get(i + 1);
-            String valueFileName = listRaw.get(i + 2);
-            String valueCreatingTime = listRaw.get(i + 3);
-            String valueStatus = listRaw.get(i + 4);
-            listExp.add(valueId + "\t" + valueTaskName + "\t" + valueFileName
-                    + "\t" + valueCreatingTime + "\t" + valueStatus);
-            i = i + 5;
+        while (i <= listRaw.size() - 7) {
+            listRaw.get(i);
+            listRaw.get(i + 1);
+            listRaw.get(i + 2);
+            listRaw.get(i + 3);
+            listRaw.get(i + 4);
+            listRaw.get(i + 5);
+            listRaw.get(i + 6);
+            i = i + 7;
         }
-        linkedExp = new LinkedList<String>(listExp);
+        linkedExp = new LinkedList<String>(listRaw);
         return linkedExp;
     }
 

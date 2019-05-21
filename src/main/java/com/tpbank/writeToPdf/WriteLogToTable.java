@@ -82,84 +82,34 @@ public class WriteLogToTable {
 		BaseTable table = new BaseTable(yPosition, yStartNewPage, bottomMargin,
 				tableWidth, margin, document, page, true, drawContent);
 
-		// the parameter is the row height
-		// Row<PDPage> headerRow = table.createRow(50);
-		// // the first parameter is the cell width
-		// Cell<PDPage> cell = headerRow.createCell(100, "Header");
-		// cell.setFont(fontBold);
-		// cell.setFontSize(20);
-		// // vertical alignment
-		// cell.setValign(VerticalAlignment.MIDDLE);
-		// // border style
-		// cell.setTopBorderStyle(new LineStyle(Color.BLACK, 10));
-		// table.addHeaderRow(headerRow);
-		//
-		// Row<PDPage> row = table.createRow(20);
-		// cell = row.createCell(30, "black left plain");
-		// cell.setFontSize(15);
-		// cell = row.createCell(70, "black left bold");
-		// cell.setFontSize(15);
-		// cell.setFont(fontBold);
-		//
-		// row = table.createRow(20);
-		// cell = row.createCell(50, "red right mono");
-		// cell.setTextColor(Color.RED);
-		// cell.setFontSize(15);
-		// cell.setFont(fontMono);
-		// // horizontal alignment
-		// cell.setAlign(HorizontalAlignment.RIGHT);
-		// cell.setBottomBorderStyle(new LineStyle(Color.RED, 5));
-		// cell = row.createCell(50, "green centered italic");
-		// cell.setTextColor(Color.GREEN);
-		// cell.setFontSize(15);
-		// cell.setFont(fontItalic);
-		// cell.setAlign(HorizontalAlignment.CENTER);
-		// cell.setBottomBorderStyle(new LineStyle(Color.GREEN, 5));
-		//
-		// row = table.createRow(20);
-		// cell = row.createCell(40, "rotated");
-		// cell.setFontSize(15);
-		// // rotate the text
-		// cell.setTextRotated(true);
-		// cell.setAlign(HorizontalAlignment.RIGHT);
-		// cell.setValign(VerticalAlignment.MIDDLE);
-		// // long text that wraps
-		// cell = row.createCell(30,
-		// "long text long text long text long text long text long text long text");
-		// cell.setFontSize(12);
-		// // long text that wraps, with more line spacing
-		// cell = row.createCell(30,
-		// "long text long text long text long text long text long text long text");
-		// cell.setFontSize(12);
-		// cell.setLineSpacing(2);
 		// ========================================================================================================
 
 		// the parameter is the row height
 		Row<PDPage> headerRow = table.createRow(20);
 		// the first parameter is the cell width
 
-		Cell<PDPage> cell = headerRow.createCell(5, "Id");
+		Cell<PDPage> cell = headerRow.createCell(5, "TT");
 		cell.setFontSize(12);
 		cell.setFont(fontBold);
 		cell.setValign(VerticalAlignment.MIDDLE);
 		cell.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell1 = headerRow.createCell(20, "Task Name");
+		Cell<PDPage> cell1 = headerRow.createCell(10, "Kind");
 		cell1.setFontSize(12);
 		cell1.setFont(fontBold);
 		cell1.setValign(VerticalAlignment.MIDDLE);
 		cell1.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell2 = headerRow.createCell(30, "File Name");
+		Cell<PDPage> cell2 = headerRow.createCell(25, "Creating Time");
 		cell2.setFontSize(12);
 		cell2.setFont(fontBold);
 		cell2.setValign(VerticalAlignment.MIDDLE);
 		cell2.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell3 = headerRow.createCell(35, "Creating time");
+		Cell<PDPage> cell3 = headerRow.createCell(25, "File name");
 		cell3.setFontSize(12);
 		cell3.setFont(fontBold);
 		cell3.setValign(VerticalAlignment.MIDDLE);
@@ -173,17 +123,35 @@ public class WriteLogToTable {
 		cell4.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
+		Cell<PDPage> cell5 = headerRow.createCell(15, "Save Folder");
+		cell4.setFontSize(12);
+		cell4.setFont(fontBold);
+		cell4.setValign(VerticalAlignment.MIDDLE);
+		cell4.setAlign(HorizontalAlignment.CENTER);
+		table.addHeaderRow(headerRow);
+
+		Cell<PDPage> cell6 = headerRow.createCell(10, "Note");
+		cell4.setFontSize(12);
+		cell4.setFont(fontBold);
+		cell4.setValign(VerticalAlignment.MIDDLE);
+		cell4.setAlign(HorizontalAlignment.CENTER);
+		table.addHeaderRow(headerRow);
+
 		// ===========================================================Body================================
 		// Iterator<String> it = logLinkedList.iterator();
 		ArrayList<String> list = new ArrayList<String>(logLinkedList);
 		int i = 0;
-		while (i <= list.size() - 4) {
+		String valueFilePath = "";
+		String valueNote = "";
+		while (i <= list.size() - 6) {
 			String valueId = list.get(i);
-			String valueTaskName = list.get(i + 1);
-			String valueFileName = list.get(i + 2);
-			String valueCreatingTime = list.get(i + 3);
+			String valueKind = list.get(i + 1);
+			String valueCreatingTime = list.get(i + 2);
+			String valueFileName = list.get(i + 3);
 			String valueStatus = list.get(i + 4);
-			i = i + 5;
+			String valueSaveFilePath = list.get(i + 5);
+			String valueNoteError = list.get(i + 6);
+			i = i + 7;
 
 			Row<PDPage> row = table.createRow(10);
 			cell = row.createCell(5, valueId);
@@ -191,22 +159,32 @@ public class WriteLogToTable {
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(20, valueTaskName);
+			cell = row.createCell(10, valueKind);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(20, valueFileName);
+			cell = row.createCell(25, valueCreatingTime);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(45, valueCreatingTime);
+			cell = row.createCell(25, valueFileName);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
 			cell = row.createCell(10, valueStatus);
+			cell.setFontSize(11);
+			cell.setValign(VerticalAlignment.MIDDLE);
+			cell.setAlign(HorizontalAlignment.CENTER);
+
+			cell = row.createCell(15, valueSaveFilePath);
+			cell.setFontSize(11);
+			cell.setValign(VerticalAlignment.MIDDLE);
+			cell.setAlign(HorizontalAlignment.CENTER);
+
+			cell = row.createCell(10, valueNoteError);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
@@ -217,6 +195,7 @@ public class WriteLogToTable {
 
 		float tableHeight = table.getHeaderAndDataHeight();
 		System.out.println("tableHeight = " + tableHeight);
+		System.out.println("result save in: \"/home/thanhdinh/IdeaProjects/JavaSwing/PDFBox/\"");
 
 		// close the content stream
 		cos.close();
