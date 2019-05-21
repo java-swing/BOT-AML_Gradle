@@ -80,7 +80,7 @@ public class QueryJobInOracle {
 
     private String queryString(String jdStartDateRs2, String jdEndDateRs2) {
         String queryStr = "";
-        queryStr = " select * from aml_bot_log a where a.creating_time between "
+        queryStr = " select * from AML_BOT_LOG_MYSQL a where a.creating_time between "
                 + "'" + jdStartDateRs2 + " ' " + "and " + "'" + jdEndDateRs2
                 + "'" + " order by a.creating_time DESC";
         return queryStr;
@@ -89,7 +89,7 @@ public class QueryJobInOracle {
     private String queryStringFromDatePicker(DatePicker jdStartDateRs2,
                                              DatePicker jdEndDateRs2) {
         String queryStr = "";
-        queryStr = " select * from aml_bot_log a where a.creating_time between "
+        queryStr = " select * from AML_BOT_LOG_MYSQL a where a.creating_time between "
                 + "'" + jdStartDateRs2 + " ' " + "and " + "'" + jdEndDateRs2
                 + "'" + " order by a.creating_time DESC";
         return queryStr;

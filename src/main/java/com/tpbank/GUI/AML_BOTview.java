@@ -194,7 +194,7 @@ public class AML_BOTview extends JFrame {
             QueryJobToExportLog queryJob = new QueryJobToExportLog(
                     jdStartDateRs, jdEndDateRs);
             String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
-            String title = "Task ID\tTask name\tFile name\tStatus";
+            String title = "TT\t  Thời gian thực hiện\t Tên tệp \t Trạng thái \t Đường dẫn lưu file \t Ghi chú";
             String log;
             try {
                 log = converteLinkedListToString(converseLogToWrite(queryJob
@@ -225,9 +225,6 @@ public class AML_BOTview extends JFrame {
                     String value = it.next();
                     System.out.println(value);
                 }
-                //
-                // WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
-                // createPdf.createTextToAPdf(log, nameFile);
 
                 com.tpbank.writeToPdf.WriteLogToTable createTableLog = new com.tpbank.writeToPdf.WriteLogToTable(
                         log, nameFile);
@@ -1141,7 +1138,7 @@ public class AML_BOTview extends JFrame {
         ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
 
         int i = 0;
-        while (i <= listRaw.size() - 7) {
+        while (i <= listRaw.size() - 6) {
             listRaw.get(i);
             listRaw.get(i + 1);
             listRaw.get(i + 2);
