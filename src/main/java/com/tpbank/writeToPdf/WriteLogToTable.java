@@ -1,6 +1,9 @@
 package com.tpbank.writeToPdf;
 
+import java.awt.Color;
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.LinkedList;
 
 import org.apache.pdfbox.pdmodel.PDDocument;
@@ -11,6 +14,8 @@ import org.apache.pdfbox.pdmodel.font.PDFont;
 import org.apache.pdfbox.pdmodel.font.PDType1Font;
 
 import be.quodlibet.boxable.*;
+import be.quodlibet.boxable.line.LineStyle;
+import be.quodlibet.boxable.text.WrappingFunction;
 
 public class WriteLogToTable {
 	private LinkedList<String> logLinkedList;
@@ -24,7 +29,7 @@ public class WriteLogToTable {
 
 	public void drawTablePDF(LinkedList<String> logLinkedList, String nameFile)
 			throws Exception {
-		String outputFileName = "/home/thanhdinh/IdeaProjects/JavaSwing/PDFBox/" + nameFile + ".pdf";
+		String outputFileName = "D:\\PdfBox\\" + nameFile + ".pdf";
 		// if (args.length > 0)
 		// outputFileName = args[0];
 
@@ -82,79 +87,76 @@ public class WriteLogToTable {
 		BaseTable table = new BaseTable(yPosition, yStartNewPage, bottomMargin,
 				tableWidth, margin, document, page, true, drawContent);
 
-		// ========================================================================================================
-
 		// the parameter is the row height
 		Row<PDPage> headerRow = table.createRow(20);
 		// the first parameter is the cell width
 
-		Cell<PDPage> cell = headerRow.createCell(5, "TT");
+		Cell<PDPage> cell = headerRow.createCell(10, "TT");
 		cell.setFontSize(12);
 		cell.setFont(fontBold);
 		cell.setValign(VerticalAlignment.MIDDLE);
 		cell.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell1 = headerRow.createCell(10, "Kind");
+		Cell<PDPage> cell1 = headerRow.createCell(10, "Loai");
 		cell1.setFontSize(12);
 		cell1.setFont(fontBold);
 		cell1.setValign(VerticalAlignment.MIDDLE);
 		cell1.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell2 = headerRow.createCell(25, "Creating Time");
+		Cell<PDPage> cell2 = headerRow.createCell(15, "Thoi gian thuc hien");
 		cell2.setFontSize(12);
 		cell2.setFont(fontBold);
 		cell2.setValign(VerticalAlignment.MIDDLE);
 		cell2.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell3 = headerRow.createCell(25, "File name");
+		Cell<PDPage> cell3 = headerRow.createCell(30, "Ten tep");
 		cell3.setFontSize(12);
 		cell3.setFont(fontBold);
 		cell3.setValign(VerticalAlignment.MIDDLE);
 		cell3.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
-
+		
 		Cell<PDPage> cell4 = headerRow.createCell(10, "Status");
 		cell4.setFontSize(12);
 		cell4.setFont(fontBold);
 		cell4.setValign(VerticalAlignment.MIDDLE);
 		cell4.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
-
-		Cell<PDPage> cell5 = headerRow.createCell(15, "Save Folder");
+		
+		Cell<PDPage> cell5 = headerRow.createCell(15, "Duong dan luu tep");
+		cell4.setFontSize(12);
+		cell4.setFont(fontBold);
+		cell4.setValign(VerticalAlignment.MIDDLE);
+		cell4.setAlign(HorizontalAlignment.CENTER);
+		table.addHeaderRow(headerRow);
+		
+		Cell<PDPage> cell6 = headerRow.createCell(10, "Ghi chu");
 		cell4.setFontSize(12);
 		cell4.setFont(fontBold);
 		cell4.setValign(VerticalAlignment.MIDDLE);
 		cell4.setAlign(HorizontalAlignment.CENTER);
 		table.addHeaderRow(headerRow);
 
-		Cell<PDPage> cell6 = headerRow.createCell(10, "Note");
-		cell4.setFontSize(12);
-		cell4.setFont(fontBold);
-		cell4.setValign(VerticalAlignment.MIDDLE);
-		cell4.setAlign(HorizontalAlignment.CENTER);
-		table.addHeaderRow(headerRow);
 
 		// ===========================================================Body================================
 		// Iterator<String> it = logLinkedList.iterator();
 		ArrayList<String> list = new ArrayList<String>(logLinkedList);
 		int i = 0;
-		String valueFilePath = "";
-		String valueNote = "";
 		while (i <= list.size() - 6) {
 			String valueId = list.get(i);
 			String valueKind = list.get(i + 1);
 			String valueCreatingTime = list.get(i + 2);
 			String valueFileName = list.get(i + 3);
 			String valueStatus = list.get(i + 4);
-			String valueSaveFilePath = list.get(i + 5);
-			String valueNoteError = list.get(i + 6);
+			String valueFilePath = list.get(i + 5);
+			String valueNote = list.get(i + 6);
 			i = i + 7;
 
 			Row<PDPage> row = table.createRow(10);
-			cell = row.createCell(5, valueId);
+			cell = row.createCell(10, valueId);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
@@ -164,27 +166,27 @@ public class WriteLogToTable {
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(25, valueCreatingTime);
+			cell = row.createCell(15, valueCreatingTime);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(25, valueFileName);
+			cell = row.createCell(30, valueFileName);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
-
+			
 			cell = row.createCell(10, valueStatus);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
-
-			cell = row.createCell(15, valueSaveFilePath);
+			
+			cell = row.createCell(15, valueFilePath);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
 
-			cell = row.createCell(10, valueNoteError);
+			cell = row.createCell(10, valueNote);
 			cell.setFontSize(11);
 			cell.setValign(VerticalAlignment.MIDDLE);
 			cell.setAlign(HorizontalAlignment.CENTER);
@@ -195,7 +197,7 @@ public class WriteLogToTable {
 
 		float tableHeight = table.getHeaderAndDataHeight();
 		System.out.println("tableHeight = " + tableHeight);
-		System.out.println("result save in: \"/home/thanhdinh/IdeaProjects/JavaSwing/PDFBox/\"");
+		System.out.println("File save in: \"D:\\PdfBox\\\"");
 
 		// close the content stream
 		cos.close();

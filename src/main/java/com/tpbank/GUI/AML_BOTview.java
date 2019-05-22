@@ -1,23 +1,28 @@
 package com.tpbank.GUI;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.DisplayMode;
 import java.awt.FlowLayout;
+import java.awt.Font;
+import java.awt.GraphicsDevice;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.Insets;
 import java.awt.Toolkit;
+import java.awt.Window;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
+import java.io.FileReader;
 import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
@@ -25,6 +30,7 @@ import java.util.Calendar;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
 
@@ -40,6 +46,7 @@ import javax.swing.JRadioButton;
 import javax.swing.JScrollPane;
 import javax.swing.JSpinner;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.SpinnerNumberModel;
@@ -48,6 +55,9 @@ import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumnModel;
+import javax.swing.table.TableModel;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
@@ -56,14 +66,18 @@ import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
 import com.github.lgooddatepicker.optionalusertools.DateTimeChangeListener;
+import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
 import com.github.lgooddatepicker.zinternaltools.DateTimeChangeEvent;
 import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
 import com.tpbank.dbJob.QueryJobToExportLog;
+import com.tpbank.dbJob.QueryJobToImportRecentStatus;
 import com.tpbank.writeToPdf.SaveEstablishInTxtFile;
-
+import com.tpbank.writeToPdf.WriteLogToPdf;
 
 public class AML_BOTview extends JFrame {
+
+    private static final int ArrayList = 0;
 
     private String downloadFolder = defaultPathString();
 
@@ -92,9 +106,18 @@ public class AML_BOTview extends JFrame {
     String StartTimeStr;
     String EndDateStr;
     String EndTimeStr;
-    ArrayList<String> loadingLast = new ArrayList<String>();
+
+    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
     QueryJobToExportLog queryJob = new QueryJobToExportLog();
+
+    private TableColumnModel columns;
+
+    private TableModel dataFile;
+
+    private JTable table;
+    DefaultTableModel model;
+    JScrollPane scrollPane;
 
     class DayInfo {
         public DayInfo(Boolean status, String dayOfWeek) {
@@ -122,17 +145,15 @@ public class AML_BOTview extends JFrame {
         }
     }
 
-    public AML_BOTview() throws ClassNotFoundException, SQLException {
+    public AML_BOTview() throws Exception {
         createGUI();
         setDisplay();
     }
 
     private void setDisplay() {
         setTitle("BOT - AML");
-        // setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(0, 0, screenSize.width / 2, screenSize.height / 2);
-        // pack();
+        setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        pack();
         setLocationRelativeTo(null);
         setVisible(true);
         setResizable(false);
@@ -140,26 +161,29 @@ public class AML_BOTview extends JFrame {
 
     }
 
-    private void createGUI() throws ClassNotFoundException, SQLException {
+    private void createGUI() throws Exception {
         getContentPane().add(createTabbedPane());
     }
 
-    private JTabbedPane createTabbedPane() throws ClassNotFoundException,
-            SQLException {
+    private JTabbedPane createTabbedPane() throws Exception {
         JTabbedPane tablePane = new JTabbedPane();
-
-        Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        setBounds(0, 0, screenSize.width / 2, screenSize.height / 2);
-
+        tablePane.setPreferredSize(new Dimension(screenSize.width / 2,
+                screenSize.height / 2));
         tablePane.setBackground(Color.white);
 
         JPanel panelResult = createPanelResult();
+        panelResult.setPreferredSize(new Dimension(screenSize.width / 2,
+                screenSize.height / 2));
         panelResult.setBackground(Color.white);
 
         JPanel panelMonitor = createPanelMonitor();
+        panelMonitor.setPreferredSize(new Dimension(screenSize.width / 2,
+                screenSize.height / 2));
         panelMonitor.setBackground(Color.white);
 
         JPanel panelEstablish = createPanelEstablish();
+        panelEstablish.setPreferredSize(new Dimension(screenSize.width / 2,
+                screenSize.height / 2));
         panelEstablish.setBackground(Color.white);
 
         tablePane.addTab("Monitor", null, panelMonitor);
@@ -172,50 +196,69 @@ public class AML_BOTview extends JFrame {
 
     private JPanel createPanelResult() throws ClassNotFoundException,
             SQLException {
-        JPanel panel = new JPanel();
-        panel.setLayout(new GridBagLayout());
+        JPanel panelResult = new JPanel();
+        panelResult.setPreferredSize(new Dimension(screenSize.width / 2,
+                screenSize.height / 2));
+        panelResult.setLayout(new GridBagLayout());
 
         GridBagConstraints c = new GridBagConstraints();
 
-        JTextArea showLog = createTextArea(10, 40);
-        showLog.setEditable(false);
-
-        JScrollPane scrollPane = new JScrollPane(showLog);
+        // JTextArea showLog = createTextArea(10, 40);
+        //
+        // showLog.append("TT\t Loại\t Thời gian\t Tên \t Trạng thái \t Đường dẫn lưu file \t Ghi chú \n");
+        // showLog.setEditable(false);
+        //
+        // JScrollPane scrollPane = new JScrollPane(showLog);
+        Vector<String> cols = new Vector<String>();
+        cols.addElement("TT");
+        cols.addElement("Loai");
+        cols.addElement("Thoi gian thuc hien");
+        cols.addElement("Ten Tep");
+        cols.addElement("Trang thai");
+        cols.addElement("Duong dan");
+        cols.addElement("Ghi chu");
+        model = new DefaultTableModel(null, cols);
+        model.fireTableDataChanged();
+        table = new JTable(model);
+        scrollPane = new JScrollPane(table);
 
         JLabel fromDate = createLabel("Từ ngày: ");
         JLabel toDate = createLabel("Tới ngày: ");
 
         DatePicker jdStartDateRs = generateDatePickerStart();
         DatePicker jdEndDateRs = generateDatePickerStart();
+        JButton btView = createButton("Hiển thị báo cáo");
 
-        JButton btView = createButton("Hiển thị ghi chú");
         btView.addActionListener(e -> {
             // btViewData = true;
             QueryJobToExportLog queryJob = new QueryJobToExportLog(
                     jdStartDateRs, jdEndDateRs);
-            String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
-            String title = "TT\t  Thời gian thực hiện\t Tên tệp \t Trạng thái \t Đường dẫn lưu file \t Ghi chú";
-            String log;
-            try {
-                log = converteLinkedListToString(converseLogToWrite(queryJob
-                        .createQueryJobToExportLog()));
-                showLog.append("\t" + nameFile + " \n");
-                showLog.append(title + "\n");
-                showLog.append(log);
-            } catch (Exception e2) {
-                // TODO Auto-generated catch block
-                e2.printStackTrace();
+            Vector<Vector> listRowData = new Vector<>();
+            listRowData.removeAllElements();
+            listRowData = queryJob.getAllData();
+            int rowCount = model.getRowCount();
+            for (int i = rowCount - 1; i >= 0; i--) {
+                model.removeRow(i);
+            }
+            for (int i = 0; i < listRowData.size(); i++) {
+                model.addRow(listRowData.get(i));
             }
 
+            model.fireTableDataChanged();
+            table = new JTable(model);
+            table.setFillsViewportHeight(true);
+            scrollPane = new JScrollPane(table);
+
         });
+
         JButton btExport = createButton("Xuất ra file báo cáo");
         btExport.addActionListener(e -> {
+            String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             QueryJobToExportLog queryJob = new QueryJobToExportLog(
                     jdStartDateRs, jdEndDateRs);
             LinkedList<String> log;
-            String nameFile = ("Result from " + jdStartDateRs + " to " + jdEndDateRs);
             try {
-                log = queryJob.createQueryJobToExportLog();
+                log = queryJob.getQueryJobToExportLog();
 
                 Iterator<String> it = log.iterator();
                 System.out.println("Print Log in Export file");
@@ -225,6 +268,9 @@ public class AML_BOTview extends JFrame {
                     String value = it.next();
                     System.out.println(value);
                 }
+                //
+                // WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
+                // createPdf.createTextToAPdf(log, nameFile);
 
                 com.tpbank.writeToPdf.WriteLogToTable createTableLog = new com.tpbank.writeToPdf.WriteLogToTable(
                         log, nameFile);
@@ -240,50 +286,55 @@ public class AML_BOTview extends JFrame {
         });
 
         c.fill = GridBagConstraints.HORIZONTAL;
-        c.ipady = 40; // make this component tall
+        c.ipady = 200; // make this component tall
+        c.ipadx = 100; // make this component tall
         c.weightx = 0.0;
-        c.gridwidth = 3; // 2 columns wide
+        c.gridwidth = 4; // 5 columns wide
         intervalSimplePanelPosition(c, 0, 0);
-        panel.add(scrollPane, c);
+        panelResult.add(scrollPane, c);
 
         c.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(c, 0, 1);
         c.gridwidth = 1;
         recurPanelPostion(c, 0, 0);
-        c.insets = new Insets(10, 0, 0, 0);
-        panel.add(fromDate, c);
+        c.insets = new Insets(10, 70, 0, 0);
+        panelResult.add(fromDate, c);
 
-        c.fill = GridBagConstraints.HORIZONTAL;
+        c.fill = GridBagConstraints.LINE_START;
         intervalSimplePanelPosition(c, 1, 1);
-        c.gridwidth = 2;
-        panel.add(jdStartDateRs, c);
+        c.gridwidth = 1;
+        c.insets = new Insets(10, -200, 0, 0);
+        panelResult.add(jdStartDateRs, c);
 
         c.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(c, 0, 2);
+        intervalSimplePanelPosition(c, 2, 1);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 0, 0, 0);
-        panel.add(toDate, c);
+        c.insets = new Insets(10, 50, 0, 0);
+        panelResult.add(toDate, c);
 
-        c.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(c, 1, 2);
-        c.gridwidth = 2;
-        panel.add(jdEndDateRs, c);
-
-        c.fill = GridBagConstraints.EAST;
-        intervalSimplePanelPosition(c, 1, 3);
+        c.fill = GridBagConstraints.LINE_START;
+        intervalSimplePanelPosition(c, 3, 1);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 0, 0, 0);
-        panel.add(btExport, c);
+        c.weightx = 30;
+        c.insets = new Insets(10, -230, 0, 80);
+        panelResult.add(jdEndDateRs, c);
 
-        c.fill = GridBagConstraints.WEST;
+        c.fill = GridBagConstraints.CENTER;
+        intervalSimplePanelPosition(c, 0, 3);
+        c.gridwidth = 1;
+        c.insets = new Insets(10, 30, 0, 0);
+        panelResult.add(btExport, c);
+
+        c.fill = GridBagConstraints.CENTER;
         intervalSimplePanelPosition(c, 2, 3);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 0, 0, 0);
-        panel.add(btView, c);
-        return panel;
+        c.insets = new Insets(10, 30, 0, 0);
+        panelResult.add(btView, c);
+        return panelResult;
     }
 
-    private JPanel createPanelMonitor() {
+    private JPanel createPanelMonitor() throws ClassNotFoundException,
+            SQLException {
         JPanel panel = new JPanel();
 
         GridBagLayout layout = new GridBagLayout();
@@ -291,21 +342,22 @@ public class AML_BOTview extends JFrame {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        JTextArea showLog = createTextArea(10, 40);
+        JTextArea showLog = createTextArea(20, 200);
         showLog.setEditable(false);
-        JScrollPane scrollPane = new JScrollPane(showLog);
+        // JScrollPane scrollPane = new JScrollPane(
+        // viewTableLog(queryJob.getQueryJobToExportLog()));
 
         c.fill = GridBagConstraints.CENTER;
         recurPanelPostion(c, 40, 40);
         c.weightx = 0.0;
         c.gridwidth = 3; // 2 columns wide
         intervalSimplePanelPosition(c, 0, 0);
-        panel.add(scrollPane, c);
+        // panel.add(scrollPane, c);
 
         return panel;
     }
 
-    private JPanel createPanelEstablish() {
+    private JPanel createPanelEstablish() throws Exception {
         SingleTaskTimer timer = new SingleTaskTimer();
         final LocalDate today = LocalDate.now();
         JPanel panelEstablish = new JPanel();
@@ -313,7 +365,8 @@ public class AML_BOTview extends JFrame {
         GridBagLayout layoutEstablish = new GridBagLayout();
 
         Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-        panelEstablish.setBounds(0, 0, screenSize.width / 2, screenSize.height / 2);
+        panelEstablish.setBounds(0, 0, screenSize.width / 2,
+                screenSize.height / 2);
 
         panelEstablish.setLayout(layoutEstablish);
         Border blacklineEstablishPanel = BorderFactory.createTitledBorder("");
@@ -338,9 +391,9 @@ public class AML_BOTview extends JFrame {
 
         JCheckBox cbSaturday = new JCheckBox("SATURDAY");
 
-
-//		JTextArea textIntervalPeriod = new JTextArea(1, 5);
-        JSpinner textIntervalPeriod = new JSpinner(new SpinnerNumberModel(0, 0, 100, 1));
+        // JTextArea textIntervalPeriod = new JTextArea(1, 5);
+        JSpinner textIntervalPeriod = new JSpinner(new SpinnerNumberModel(0, 0,
+                100, 1));
         textIntervalPeriod.setBorder(null);
         textFieldRecur.setEnabled(false);
         textIntervalPeriod.setEnabled(false);
@@ -390,6 +443,7 @@ public class AML_BOTview extends JFrame {
         ButtonGroup buttonGroupRadio = new ButtonGroup();
         buttonGroupRadio.add(r1);
         r1.setText("Một lần");
+        r1.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         r1.setEnabled(false);
         r1.addActionListener(new ActionListener() {
 
@@ -405,6 +459,7 @@ public class AML_BOTview extends JFrame {
         });
         buttonGroupRadio.add(r2);
         r2.setText("Hàng ngày");
+        r2.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         r2.setEnabled(false);
         r2.addActionListener(new ActionListener() {
 
@@ -413,7 +468,7 @@ public class AML_BOTview extends JFrame {
                 textFieldRecur.setEnabled(false);
                 setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
                         cbWednesday, cbThursday, cbFriday, cbSaturday, false);
-                textIntervalPeriod.setEnabled(false);
+                textIntervalPeriod.setEnabled(true);
                 period = 24 * 60;
             }
         });
@@ -451,14 +506,14 @@ public class AML_BOTview extends JFrame {
         cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cIntervalSimple, 0, 0);
         cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
-        cIntervalSimple.insets = new Insets(10, 10, 10, 0);
+        cIntervalSimple.insets = new Insets(10, 5, 5, 0);
         panelIntervalSimple.add(r1, cIntervalSimple);
 
         // RadioButton "Daily"
         cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cIntervalSimple, 0, 1);
         cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
-        cIntervalSimple.insets = new Insets(10, 10, 20, 0);
+        cIntervalSimple.insets = new Insets(10, 5, 10, 10);
         panelIntervalSimple.add(r2, cIntervalSimple);
 
         // =======Start Time=====================
@@ -471,28 +526,39 @@ public class AML_BOTview extends JFrame {
 
         // add label Start to Panel Setting:
         JLabel startLb = new JLabel("Bắt đầu: 	");
+        startLb.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
         intervalSimplePanelPosition(cStartTime, 0, 0);
         cStartTime.anchor = GridBagConstraints.LINE_START;
-        cStartTime.insets = new Insets(20, 20, 0, 0);
+        cStartTime.insets = new Insets(10, 10, 10, 10);
         panelStartTime.add(startLb, cStartTime);
 
         // add label Start to Panel StartTime:
         TimePickerSettings timePickerSettingsStart = new TimePickerSettings();
+        // timePickerSettingsStart.setFontValidDate(new Font("Monospaced",
+        // Font.ITALIC | Font.BOLD, 17));
         timePickerSettingsStart.setInitialTimeToNow();
+        timePickerSettingsStart.setFormatForDisplayTime(PickerUtilities
+                .createFormatterFromPatternString("HH:mm:ss",
+                        timePickerSettingsStart.getLocale()));
+
         DatePickerSettings datePickerSettingsStart = new DatePickerSettings();
         dateTimePickerStart = new DateTimePicker(datePickerSettingsStart,
                 timePickerSettingsStart);
-        datePickerSettingsStart.setDateRangeLimits(today.minusDays(0),
-                today.plusDays(3000));
-        DatePickerSettings dateSettingsEndDatePicker = new DatePickerSettings();
+
+        datePickerSettingsStart.setFormatForDatesCommonEra("yyyy-MM-dd");
+        /*
+         * datePickerSettingsStart.setDateRangeLimits(today.minusDays(0),
+         * today.plusDays(3000));
+         */
+        DatePickerSettings dateSettingsStopDatePicker = new DatePickerSettings();
         dateTimePickerStart
                 .addDateTimeChangeListener(new DateTimeChangeListener() {
                     @Override
                     public void dateOrTimeChanged(DateTimeChangeEvent arg0) {
                         if (dateTimePickerStart.getDatePicker().getDate() != null) {
-                            dateSettingsEndDatePicker.setDateRangeLimits(
+                            dateSettingsStopDatePicker.setDateRangeLimits(
                                     today.minusDays(getDiffWithTodayByDay(dateTimePickerStart)),
                                     today.plusDays(3000));
                             textFieldRecur.setEnabled(false);
@@ -515,26 +581,33 @@ public class AML_BOTview extends JFrame {
         cStartTime.fill = GridBagConstraints.HORIZONTAL;
         taskControlPanelPosition(cStartTime, 0, 0);
         startTimePanelPosition(cStartTime, 0, 1);
-        // cStartTime.weightx = 1;
-        // cStartTime.gridwidth = 3;
+        cStartTime.weightx = 1;
+        cStartTime.gridwidth = 3;
+        cStartTime.ipadx = 80;
         cStartTime.anchor = GridBagConstraints.LINE_START;
-        cStartTime.insets = new Insets(5, 0, 0, 0);
+        cStartTime.insets = new Insets(5, 10, 10, 10);
         panelStartTime.add(dateTimePickerStart, cStartTime);
 
         // add label Start to Panel Setting:
         JLabel stopLb = new JLabel("Kết thúc: 	");
+        stopLb.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
         intervalSimplePanelPosition(cStartTime, 0, 1);
         cStartTime.anchor = GridBagConstraints.LINE_START;
-        cStartTime.insets = new Insets(0, 10, 0, 0);
+        cStartTime.insets = new Insets(5, 10, 10, 10);
         panelStartTime.add(stopLb, cStartTime);
 
         // DateTime Strop
-        TimePickerSettings timeStopSettings = new TimePickerSettings();
-        timeStopSettings.setInitialTimeToNow();
+        TimePickerSettings timeSettingsStop = new TimePickerSettings();
+        timeSettingsStop.setInitialTimeToNow();
+        timeSettingsStop.setFormatForDisplayTime(PickerUtilities
+                .createFormatterFromPatternString("HH:mm:ss",
+                        timeSettingsStop.getLocale()));
+
         DateTimePicker dateTimePickerStop = new DateTimePicker(
-                dateSettingsEndDatePicker, timeStopSettings);
+                dateSettingsStopDatePicker, timeSettingsStop);
+        dateSettingsStopDatePicker.setFormatForDatesCommonEra("yyyy-MM-dd");
         dateTimePickerStop.setEnabled(false);
         dateTimePickerStart
                 .addDateTimeChangeListener(new DateTimeChangeListener() {
@@ -561,8 +634,9 @@ public class AML_BOTview extends JFrame {
         cStartTime.fill = GridBagConstraints.HORIZONTAL;
         taskControlPanelPosition(cStartTime, 0, 0);
         startTimePanelPosition(cStartTime, 1, 1);
+        cStartTime.ipadx = 80;
         cStartTime.anchor = GridBagConstraints.LINE_START;
-        cStartTime.insets = new Insets(5, 0, 0, 0);
+        cStartTime.insets = new Insets(5, 10, 10, 10);
         panelStartTime.add(dateTimePickerStop, cStartTime);
 
         // Panel Interval
@@ -572,43 +646,49 @@ public class AML_BOTview extends JFrame {
         panelInterval.setLayout(layoutInterval);
 
         JLabel intervalPeriod = createLabel("Chu kỳ lặp lại: ");
+        intervalPeriod
+                .setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cInterval.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cInterval, 0, 0);
         startTimePanelPosition(cInterval, 0, 0);
         cInterval.anchor = GridBagConstraints.LINE_START;
-        cInterval.insets = new Insets(5, 10, 0, 0);
+        cInterval.insets = new Insets(5, 10, 10, 10);
         panelInterval.add(intervalPeriod, cInterval);
 
         Border blacklineIntervalPeriod = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         textIntervalPeriod.setBorder(blacklineIntervalPeriod);
+        // textIntervalPeriod.getDocument().addDocumentListener(
         textIntervalPeriod.addChangeListener(new ChangeListener() {
 
             @Override
             public void stateChanged(ChangeEvent arg0) {
-                if(!textIntervalPeriod.getValue().equals(0)) {
+                if (!textIntervalPeriod.getValue().equals(0)) {
                     setRadioButtonStatus(r1, r2, r3, r4, false);
-                }else {
+                } else {
                     setRadioButtonStatus(r1, r2, r3, r4, true);
                 }
             }
         });
 
         cInterval.fill = GridBagConstraints.CENTER;
+        textIntervalPeriod.setFont(new Font("TimesRoman", Font.CENTER_BASELINE,
+                16));
         taskControlPanelPosition(cInterval, 0, 0);
         startTimePanelPosition(cInterval, 0, 1);
-        // cInterval.weightx = 0;
         cInterval.anchor = GridBagConstraints.LINE_START;
-        cInterval.insets = new Insets(5, 10, 0, 0);
+        cInterval.insets = new Insets(5, 10, 10, 10);
         panelInterval.add(textIntervalPeriod, cInterval);
 
         JLabel intervalUnitTime = createLabel("phút");
+        intervalUnitTime.setFont(new Font("TimesRoman", Font.CENTER_BASELINE,
+                16));
         cInterval.fill = GridBagConstraints.CENTER;
         taskControlPanelPosition(cInterval, 0, 0);
         startTimePanelPosition(cInterval, 0, 2);
         cInterval.weightx = 1.0;
         cInterval.anchor = GridBagConstraints.LINE_END;
-        cInterval.insets = new Insets(5, 10, 0, 0);
+        cInterval.insets = new Insets(5, 10, 10, 10);
         panelInterval.add(intervalUnitTime, cInterval);
 
         // =======Start Time=====================
@@ -621,11 +701,14 @@ public class AML_BOTview extends JFrame {
         panelRecur.setBorder(blacklineRecur);
         panelRecur.setBackground(Color.white);
 
+        // Checkbox Sunday
+        cbSunday.setText("Chủ nhật");
+        cbSunday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 1, 0);
+        startTimePanelPosition(cRecur, 2, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
         panelRecur.add(cbSunday, cRecur);
         cbSunday.addActionListener(new ActionListener() {
             @Override
@@ -639,11 +722,13 @@ public class AML_BOTview extends JFrame {
         // Checkbox Monday
         // JCheckBox cbMonday = new JCheckBox("Monday");
         taskControlPanelPosition(cRecur, 0, 0);
-        cRecur.fill = GridBagConstraints.WEST;
-        startTimePanelPosition(cRecur, 1, 1);
+        cRecur.fill = GridBagConstraints.HORIZONTAL;
+        startTimePanelPosition(cRecur, 1, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
         panelRecur.add(cbMonday, cRecur);
+        cbMonday.setText("Thứ hai");
+        cbMonday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cbMonday.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -656,9 +741,12 @@ public class AML_BOTview extends JFrame {
         // Checkbox Tuesday
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 1, 2);
+        startTimePanelPosition(cRecur, 1, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
+        cbTuesday.setText("Thứ ba");
+        ;
+        cbTuesday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         panelRecur.add(cbTuesday, cRecur);
         cbTuesday.addActionListener(new ActionListener() {
             @Override
@@ -672,9 +760,12 @@ public class AML_BOTview extends JFrame {
         // Checkbox Wednesday
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 1, 3);
+        startTimePanelPosition(cRecur, 1, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
+        cbWednesday.setText("Thứ tư");
+        ;
+        cbWednesday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         panelRecur.add(cbWednesday, cRecur);
         cbWednesday.addActionListener(new ActionListener() {
             @Override
@@ -688,9 +779,12 @@ public class AML_BOTview extends JFrame {
         // Checkbox Thursday
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 0);
+        startTimePanelPosition(cRecur, 1, 3);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
+        cbThursday.setText("Thứ năm");
+        ;
+        cbThursday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         panelRecur.add(cbThursday, cRecur);
         cbThursday.addActionListener(new ActionListener() {
             @Override
@@ -704,11 +798,13 @@ public class AML_BOTview extends JFrame {
         // Checkbox Friday
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 1);
+        startTimePanelPosition(cRecur, 2, 0);
         cRecur.gridwidth = 1;
         recurPanelPostion(cRecur, 1, 4);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
+        cbFriday.setText("Thứ sáu");
+        cbFriday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         panelRecur.add(cbFriday, cRecur);
         cbFriday.addActionListener(new ActionListener() {
             @Override
@@ -722,9 +818,11 @@ public class AML_BOTview extends JFrame {
         // Checkbox Saturday
         taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 2);
+        startTimePanelPosition(cRecur, 2, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(0, 10, 0, 0);
+        cRecur.insets = new Insets(20, 0, 0, 30);
+        cbSaturday.setText("Thứ bảy");
+        cbSaturday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         panelRecur.add(cbSaturday, cRecur);
         cbSaturday.addActionListener(new ActionListener() {
             @Override
@@ -742,7 +840,7 @@ public class AML_BOTview extends JFrame {
         taskControlPanelPosition(cSetting, 1, 2);
         settingPanelWidthAndHeight(cSetting, 1, 2);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(10, 5, 5, 0);
+        cSetting.insets = new Insets(0, -70, -20, 0);
         panelSetting.add(panelIntervalSimple, cSetting);
         panelSetting.setBackground(Color.white);
 
@@ -752,7 +850,8 @@ public class AML_BOTview extends JFrame {
         settingPanelWidthAndHeight(cSetting, 4, 1);
         taskControlPanelPosition(cSetting, 1, 1);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(5, 0, 0, 0);
+        cSetting.ipadx = 2;
+        cSetting.insets = new Insets(10, 5, -20, 0);
         panelSetting.add(panelStartTime, cSetting);
 
         // add panel StartTime to panel Setting
@@ -761,7 +860,7 @@ public class AML_BOTview extends JFrame {
         settingPanelWidthAndHeight(cSetting, 4, 1);
         taskControlPanelPosition(cSetting, 1, 1);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(5, 0, 0, 0);
+        cSetting.insets = new Insets(20, 5, 0, 0);
         panelSetting.add(panelInterval, cSetting);
 
         // add panel Recur to panel Setting
@@ -770,7 +869,7 @@ public class AML_BOTview extends JFrame {
         taskControlPanelPosition(cSetting, 0, 0);
         settingPanelWidthAndHeight(cSetting, 0, 0);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(5, 0, 0, 0);
+        cSetting.insets = new Insets(5, 5, 10, 10);
         panelSetting.add(panelRecur, cSetting);
 
         // ======== panel Advance panelSaveSetting=========================
@@ -785,11 +884,12 @@ public class AML_BOTview extends JFrame {
 
         // Label Save textField
         JLabel lbSaveFolder = new JLabel("Đường dẫn:");
+        lbSaveFolder.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cSaveSetting.fill = GridBagConstraints.FIRST_LINE_START;
         startTimePanelPosition(cSaveSetting, 0, 0);
         cSaveSetting.anchor = GridBagConstraints.LINE_START; // bottom of
         // space
-        cSaveSetting.insets = new Insets(0, 0, 0, 0);
+        cSaveSetting.insets = new Insets(10, 10, 10, 10);
         panelSaveSetting.add(lbSaveFolder, cSaveSetting);
 
         // Label Save textField
@@ -821,25 +921,105 @@ public class AML_BOTview extends JFrame {
         Border blacklineTxtSaveFolder = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         textSaveFolder.setBorder(blacklineTxtSaveFolder);
+        textSaveFolder
+                .setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
         cSaveSetting.fill = GridBagConstraints.FIRST_LINE_START;
         startTimePanelPosition(cSaveSetting, 0, 1);
         cSaveSetting.weightx = 2.0;
         cSaveSetting.anchor = GridBagConstraints.LINE_START; // bottom of
         // space
-        cSaveSetting.insets = new Insets(5, 10, 10, 0);
+        cSaveSetting.insets = new Insets(5, 10, 10, 10);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
 
-//         ======== panel panelTaskControl=========================
-//        loadingLast  = readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
+//		loadFileAndReturnElement();
+        // if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
+        System.out
+                .println("==================================Loading last status=========================================");
 
+        r1.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(0)));
+        r2.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(1)));
+
+        if(r1.isSelected()) {
+            period = 1;
+            textIntervalPeriod.setEnabled(false);
+            System.out.println(period);
+        }
+        else if (r2.isSelected()) {
+            if (textIntervalPeriod.getValue().toString().equals("0")) {
+                period = 24*60;
+            }
+            else {
+                period = Integer.parseInt(textIntervalPeriod.getValue().toString());
+            }
+        }
+
+        dateTimePickerStart.datePicker.setDate(LocalDate
+                .parse((loadFileAndReturnElement().get(2))));
+        dateTimePickerStart.timePicker.setText((loadFileAndReturnElement()
+                .get(3)).toString());
+        dateTimePickerStop.datePicker.setDate(LocalDate
+                .parse((loadFileAndReturnElement().get(4))));
+        dateTimePickerStop.timePicker.setText((loadFileAndReturnElement()
+                .get(5)).toString());
+
+        textSaveFolder.setText(loadFileAndReturnElement().get(6));
+        if (Integer.parseInt(loadFileAndReturnElement().get(7)) == -1) {
+            textIntervalPeriod.setEnabled(false);
+        } else {
+            textIntervalPeriod.setValue(Integer
+                    .parseInt(loadFileAndReturnElement().get(7)));
+        }
+
+        cbSunday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(8)));
+        cbMonday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(9)));
+        cbTuesday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(10)));
+        cbWednesday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(11)));
+        cbThursday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(12)));
+        cbFriday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(13)));
+        cbSaturday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
+                .get(14)));
+
+        System.out
+                .println("==================================Loading last status DONE=========================================");
+
+        System.out.println("0. jrdOneTime " + r1.isSelected());
+        System.out.println("1. jrdDaily " + r2.isSelected());
+
+        System.out.println("2. StartDateStr "
+                + dateTimePickerStart.datePicker.toString());
+        System.out.println("3. StartTimeStr "
+                + dateTimePickerStart.timePicker.toString());
+        System.out.println("4. EndDateStr "
+                + dateTimePickerStop.datePicker.toString());
+        System.out.println("5. EndTimeStr "
+                + dateTimePickerStop.timePicker.toString());
+        System.out.println("6. saveFile " + textSaveFolder.getText());
+        System.out.println("7. intevalPeriod " + textIntervalPeriod.getValue());
+        System.out.println("8. jcbSundayStatus " + cbSunday.isSelected());
+        System.out.println("9. jcbMondayStatus " + cbMonday.isSelected());
+        System.out.println("10. jcbTuesdayStatus " + cbTuesday.isSelected());
+        System.out
+                .println("11. jcbWednesdayStatus " + cbWednesday.isSelected());
+        System.out.println("12. jcbThurdayStatus " + cbThursday.isSelected());
+        System.out.println("13. jcbFridayStatus " + cbFriday.isSelected());
+        System.out.println("14. jcbSaturStatus " + cbSaturday.isSelected());
+        System.out
+                .println("==================================Done=========================================");
 
         btSaveSetting
                 .addActionListener(e -> {
                     jrdOneTime = r1.isSelected();
                     jrdDaily = r2.isSelected();
 
-                    if (textIntervalPeriod.getValue().toString() != null) {
-                        intevalPeriod = Integer.parseInt(textIntervalPeriod.getValue().toString());
+                    if (!textIntervalPeriod.getValue().equals(0)) {
+                        intevalPeriod = Integer.parseInt(textIntervalPeriod
+                                .getValue().toString());
                     } else {
                         intevalPeriod = -1;
                     }
@@ -861,40 +1041,44 @@ public class AML_BOTview extends JFrame {
                     EndTimeStr = dateTimePickerStop.getTimePicker().getTime()
                             .toString();
 
-                    System.out.println("1. jrdOneTime " + jrdOneTime);
-                    System.out.println("2. jrdDaily " + jrdDaily);
+                    System.out.println("0. jrdOneTime " + jrdOneTime);
+                    System.out.println("1. jrdDaily " + jrdDaily);
 
-                    System.out.println("3. StartDateStr " + StartDateStr);
-                    System.out.println("4. StartTimeStr " + StartTimeStr);
-                    System.out.println("5. EndDateStr " + EndDateStr);
-                    System.out.println("6. EndTimeStr " + EndTimeStr);
-                    System.out.println("7. saveFile " + saveFile);
-                    System.out.println("8. intevalPeriod " + intevalPeriod);
-                    System.out.println("9. jcbSundayStatus " + jcbSundayStatus);
-                    System.out.println("10. jcbMondayStatus " + jcbMondayStatus);
-                    System.out.println("11. jcbTuesdayStatus " + jcbTuesdayStatus);
-                    System.out.println("12. jcbWednesdayStatus "
+                    System.out.println("2. StartDateStr " + StartDateStr);
+                    System.out.println("3. StartTimeStr " + StartTimeStr);
+                    System.out.println("4. EndDateStr " + EndDateStr);
+                    System.out.println("5. EndTimeStr " + EndTimeStr);
+                    System.out.println("6. saveFile " + saveFile);
+                    System.out.println("7. intevalPeriod " + intevalPeriod);
+                    System.out.println("8. jcbSundayStatus " + jcbSundayStatus);
+                    System.out.println("9. jcbMondayStatus " + jcbMondayStatus);
+                    System.out.println("10. jcbTuesdayStatus "
+                            + jcbTuesdayStatus);
+                    System.out.println("11. jcbWednesdayStatus "
                             + jcbWednesdayStatus);
-                    System.out.println("13. jcbThurdayStatus " + jcbThurdayStatus);
-                    System.out.println("14. jcbFridayStatus " + jcbFridayStatus);
-                    System.out.println("15. jcbSaturStatus " + jcbSaturStatus);
+                    System.out.println("12. jcbThurdayStatus "
+                            + jcbThurdayStatus);
                     System.out
-                            .println("===================================Save String ===================================");
-                    String saveString = jrdOneTime + "@" + jrdDaily + "@" + StartDateStr + "@ " + StartTimeStr +
-                            "@" + EndDateStr + "@" + EndTimeStr + "@" + saveFile + "@" + intevalPeriod + "@" + jcbSundayStatus +
-                            "/" + jcbMondayStatus + "/" + jcbTuesdayStatus + "@" + jcbWednesdayStatus + "@" + jcbThurdayStatus +
-                            "@" + jcbFridayStatus + "@" + jcbSaturStatus;
-                    System.out.println(jrdOneTime);
-                    System.out.println(jrdDaily);
-                    SaveEstablishInTxtFile newSaveFile = new SaveEstablishInTxtFile(saveString);
+                            .println("13. jcbFridayStatus " + jcbFridayStatus);
+                    System.out.println("14. jcbSaturStatus " + jcbSaturStatus);
+                    System.out
+                            .println("===========================================================================================");
+                    String saveString = jrdOneTime + "/" + jrdDaily + "/"
+                            + StartDateStr + "/ " + StartTimeStr + "/"
+                            + EndDateStr + "/" + EndTimeStr + "/" + saveFile
+                            + "/" + intevalPeriod + "/" + jcbSundayStatus + "/"
+                            + jcbMondayStatus + "/" + jcbTuesdayStatus + "/"
+                            + jcbWednesdayStatus + "/" + jcbThurdayStatus + "/"
+                            + jcbFridayStatus + "/" + jcbSaturStatus;
+                    SaveEstablishInTxtFile newSaveFile = new SaveEstablishInTxtFile(
+                            saveString);
                     newSaveFile.saveTextEstablish(saveString);
-//                    try {
-//                        ReadFileAndSplit();
-//                    } catch (Exception e1) {
-//                        // TODO Auto-generated catch block
-//                        e1.printStackTrace();
-//                    }
-                    readAllFileAndSaveToArr("SaveEstablishText/saveEstablish.txt");
+                    try {
+                        loadFileAndReturnElement();
+                    } catch (Exception e1) {
+                        // TODO Auto-generated catch block
+                        e1.printStackTrace();
+                    }
                 });
         cTaskControl.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cTaskControl, 0, 0);
@@ -906,9 +1090,10 @@ public class AML_BOTview extends JFrame {
 
         btStart.addActionListener(e -> {
 
-            // actionBtnStart(timer, textIntervalPeriod, dateTimePickerStart,
-            // dateTimePickerStop, textSaveFolder, textFieldRecur,
-            // dateStartArr);
+            actionBtnStart(timer, textIntervalPeriod.getValue().toString(),
+                    dateTimePickerStart, dateTimePickerStop, textSaveFolder,
+                    dateStartArr);
+
         });
         cTaskControl.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cTaskControl, 0, 1);
@@ -944,7 +1129,10 @@ public class AML_BOTview extends JFrame {
         cEstablish.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(cEstablish, 0, 0);
         taskControlPanelPosition(cEstablish, 0, 0);
-        cEstablish.insets = new Insets(0, 0, 0, 0);
+        cEstablish.ipadx = 75;
+        cEstablish.ipady = 50;
+        cEstablish.weightx = 40;
+        cEstablish.insets = new Insets(-70, -20, 0, 0);
         panelEstablish.add(panelSetting, cEstablish);
 
         // Establish=======================
@@ -965,6 +1153,14 @@ public class AML_BOTview extends JFrame {
 
         return panelEstablish;
     }
+
+    // private void actionBtnStart(SingleTaskTimer timer,
+    // JSpinner textIntervalPeriod, DateTimePicker dateTimePickerStart2,
+    // DateTimePicker dateTimePickerStop, JTextArea textSaveFolder,
+    // ArrayList<LocalDate> dateStartArr2) {
+    // // TODO Auto-generated method stub
+    //
+    // }
 
     private void cBDayOfWeekStatus(JCheckBox cbox, boolean cbStatus) {
         System.out.println(cbox.getText().toUpperCase() + ": " + cbStatus);
@@ -1093,6 +1289,7 @@ public class AML_BOTview extends JFrame {
         return pref.get("DEFAULT_PATH", "");
     }
 
+    @SuppressWarnings("deprecation")
     private Calendar calendarFromPickers(DatePicker datePicker,
                                          TimePicker timePicker) {
         Date date = sqlDateFrom(datePicker);
@@ -1115,41 +1312,6 @@ public class AML_BOTview extends JFrame {
     private Date sqlDateFrom(DatePicker datePicker) {
         LocalDate localDate = datePicker.getDate();
         return java.sql.Date.valueOf(localDate);
-    }
-
-    private String converteLinkedListToString(LinkedList<String> list) {
-
-        String listString = "";
-
-        StringBuilder string = new StringBuilder();
-        Iterator<?> it = list.descendingIterator();
-
-        while (it.hasNext()) {
-            string.append(it.next());
-            string.append("\n");
-        }
-        listString = string.toString();
-        return listString;
-    }
-
-    private LinkedList<String> converseLogToWrite(
-            LinkedList<String> logLinkedList) {
-        LinkedList<String> linkedExp = new LinkedList<String>();
-        ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
-
-        int i = 0;
-        while (i <= listRaw.size() - 6) {
-            listRaw.get(i);
-            listRaw.get(i + 1);
-            listRaw.get(i + 2);
-            listRaw.get(i + 3);
-            listRaw.get(i + 4);
-            listRaw.get(i + 5);
-            listRaw.get(i + 6);
-            i = i + 7;
-        }
-        linkedExp = new LinkedList<String>(listRaw);
-        return linkedExp;
     }
 
     private long getDiffWithTodayByDay(DateTimePicker dateTimeStart) {
@@ -1254,9 +1416,9 @@ public class AML_BOTview extends JFrame {
     }
 
     private void actionBtnStart(SingleTaskTimer timer,
-                                JTextArea textIntervalPeriod, DateTimePicker dateTimePickerStart,
+                                String textIntervalPeriod, DateTimePicker dateTimePickerStart,
                                 DateTimePicker dateTimePickerStop, JTextArea txtSaveFolder,
-                                JTextField txtRecur, ArrayList<LocalDate> dateStartArr) {
+                                ArrayList<LocalDate> dateStartArr) {
         Calendar calEnd = calendarFromPickers(
                 dateTimePickerStop.getDatePicker(),
                 dateTimePickerStop.getTimePicker());
@@ -1269,22 +1431,18 @@ public class AML_BOTview extends JFrame {
                 calStart.set(date.getYear(), date.getMonthValue() - 1,
                         date.getDayOfMonth());
                 System.out.println(calStart.toString());
-                saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
-                        calEnd, calStart);
+                saveFile(timer, textIntervalPeriod, txtSaveFolder, calEnd,
+                        calStart);
             }
         } else {
-            saveFile(timer, textIntervalPeriod, txtSaveFolder, txtRecur,
-                    calEnd, calStart);
+            saveFile(timer, textIntervalPeriod, txtSaveFolder, calEnd, calStart);
         }
     }
 
-    private void saveFile(SingleTaskTimer timer, JTextArea textIntervalPeriod,
-                          JTextArea txtSaveFolder, JTextField txtRecur, Calendar calEnd,
-                          Calendar calStart) {
-        if (!textIntervalPeriod.getText().isEmpty()) {
-            period = Integer.parseInt(textIntervalPeriod.getText());
-        } else if (!txtRecur.getText().isEmpty()) {
-            period = Integer.parseInt(txtRecur.getText()) * 7 * 24 * 60;
+    private void saveFile(SingleTaskTimer timer, String textIntervalPeriod,
+                          JTextArea txtSaveFolder, Calendar calEnd, Calendar calStart) {
+        if (!textIntervalPeriod.equals("0")) {
+            period = Integer.parseInt(textIntervalPeriod);
         }
         System.out.println(period);
         long timePeriod = TimeUnit.MILLISECONDS.convert(period,
@@ -1297,29 +1455,91 @@ public class AML_BOTview extends JFrame {
         }
         timer.setTask(new StartTask(downloadFolder));
         timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
+
     }
 
-    private static ArrayList<String> readAllFileAndSaveToArr(String filePath) {
-        ArrayList<String> statusArr = new ArrayList<String>();
-        String content = "";
-
-        try {
-            content = new String(Files.readAllBytes(Paths.get(filePath)));
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-        System.out.println("=============================Reader String ===================================");
-        System.out.println(content);
-        System.out.println("==============================================================================");
-        String[] arrOfStr = content.split("@", 15);
-        int i = 1;
-        for (String a : arrOfStr) {
-
-            statusArr.add(a);
-            System.out.println(i + " " +a);
-            i++;
-        }
-        return statusArr;
+    private void saveRecentEstablishTabStatus(Boolean oneTime, Boolean daily,
+                                              Boolean weekly, Boolean monthly, String startDateStr2,
+                                              String startTimeStr2, String endDateStr2, String endTimeStr2,
+                                              Integer intevalPeriod, Integer recur, Boolean sundayStatus,
+                                              Boolean mondayStatus, Boolean tuesdayStatus,
+                                              Boolean wednesdayStatus, Boolean thurdayStatus,
+                                              Boolean fridayStatus, Boolean saturStatus)
+            throws ClassNotFoundException, SQLException {
+        QueryJobToImportRecentStatus queryImportStatus = new QueryJobToImportRecentStatus(
+                oneTime, daily, weekly, monthly, startDateStr2, startTimeStr2,
+                endDateStr2, endTimeStr2, intevalPeriod, recur, sundayStatus,
+                mondayStatus, tuesdayStatus, wednesdayStatus, thurdayStatus,
+                fridayStatus, saturStatus);
+        queryImportStatus.createQueryJobToImportStatus();
     }
+
+    private ArrayList<String> loadFileAndReturnElement() throws Exception {
+        // We need to provide file path as the parameter:
+        // double backquote is to avoid compiler interpret words
+        // like \test as \t (ie. as a escape sequence)
+        ArrayList<String> loadingStatus = new ArrayList<String>();
+        File file = new File("SaveEstablishText\\saveEstablish.txt");
+
+        BufferedReader br = new BufferedReader(new FileReader(file));
+
+        String st;
+
+        /*
+         * System.out
+         * .println("=====================================================");
+         */
+        // System.out.println("String has split by \"/\" ");
+        int i = 0;
+        while ((st = br.readLine()) != null) {
+            String s1 = st;
+            String[] words = s1.split("/");
+            for (String w : words) {
+                loadingStatus.add(w);
+                // System.out.println(i + ". " + w);
+                // i++;
+            }
+        }
+        return loadingStatus;
+    }
+
+    private String converteLinkedListToString(LinkedList<String> list) {
+
+        String listString = "";
+
+        StringBuilder string = new StringBuilder();
+        Iterator<?> it = list.descendingIterator();
+
+        while (it.hasNext()) {
+            string.append(it.next());
+            string.append("\n");
+        }
+        listString = string.toString();
+        return listString;
+    }
+
+    private LinkedList<String> converseLogToWrite(
+            LinkedList<String> logLinkedList) {
+        LinkedList<String> linkedExp = new LinkedList<String>();
+        ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
+        ArrayList<String> listExp = new ArrayList<String>();
+
+        int i = 0;
+        while (i <= listRaw.size() - 6) {
+            String valueId = listRaw.get(i);
+            String valueKind = listRaw.get(i + 1);
+            String valueCreatingTime = listRaw.get(i + 2);
+            String valueFileName = listRaw.get(i + 3);
+            String valueStatus = listRaw.get(i + 4);
+            String valueFilePath = listRaw.get(i + 5);
+            String valueNote = listRaw.get(i + 6);
+            listExp.add(valueId + "\t" + valueKind + "\t" + valueFileName
+                    + "\t" + valueFileName + "\t" + valueStatus + "\t"
+                    + valueFilePath + "\t" + valueNote);
+            i = i + 7;
+        }
+        linkedExp = new LinkedList<String>(listExp);
+        return linkedExp;
+    }
+
 }
-
