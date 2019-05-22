@@ -931,7 +931,7 @@ public class AML_BOTview extends JFrame {
         cSaveSetting.insets = new Insets(5, 10, 10, 10);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
 
-//		loadFileAndReturnElement();
+		loadFileAndReturnElement();
         // if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
         System.out
                 .println("==================================Loading last status=========================================");
@@ -1063,13 +1063,13 @@ public class AML_BOTview extends JFrame {
                     System.out.println("14. jcbSaturStatus " + jcbSaturStatus);
                     System.out
                             .println("===========================================================================================");
-                    String saveString = jrdOneTime + "/" + jrdDaily + "/"
-                            + StartDateStr + "/ " + StartTimeStr + "/"
-                            + EndDateStr + "/" + EndTimeStr + "/" + saveFile
-                            + "/" + intevalPeriod + "/" + jcbSundayStatus + "/"
-                            + jcbMondayStatus + "/" + jcbTuesdayStatus + "/"
-                            + jcbWednesdayStatus + "/" + jcbThurdayStatus + "/"
-                            + jcbFridayStatus + "/" + jcbSaturStatus;
+                    String saveString = jrdOneTime + "@" + jrdDaily + "@"
+                            + StartDateStr + "@" + StartTimeStr + "@"
+                            + EndDateStr + "@" + EndTimeStr + "@" + saveFile
+                            + "@" + intevalPeriod + "@" + jcbSundayStatus + "@"
+                            + jcbMondayStatus + "@" + jcbTuesdayStatus + "@"
+                            + jcbWednesdayStatus + "@" + jcbThurdayStatus + "@"
+                            + jcbFridayStatus + "@" + jcbSaturStatus;
                     SaveEstablishInTxtFile newSaveFile = new SaveEstablishInTxtFile(
                             saveString);
                     newSaveFile.saveTextEstablish(saveString);
@@ -1479,7 +1479,7 @@ public class AML_BOTview extends JFrame {
         // double backquote is to avoid compiler interpret words
         // like \test as \t (ie. as a escape sequence)
         ArrayList<String> loadingStatus = new ArrayList<String>();
-        File file = new File("SaveEstablishText\\saveEstablish.txt");
+        File file = new File("SaveEstablishText/saveEstablish.txt");
 
         BufferedReader br = new BufferedReader(new FileReader(file));
 
@@ -1493,7 +1493,7 @@ public class AML_BOTview extends JFrame {
         int i = 0;
         while ((st = br.readLine()) != null) {
             String s1 = st;
-            String[] words = s1.split("/");
+            String[] words = s1.split("@");
             for (String w : words) {
                 loadingStatus.add(w);
                 // System.out.println(i + ". " + w);

@@ -29,7 +29,7 @@ public class SaveEstablishInTxtFile {
  
 		try {
  
-			file = new File("SaveEstablishText\\saveEstablish.txt");
+			file = new File("SaveEstablishText/saveEstablish.txt");
 			fop = new FileOutputStream(file);
  
 			// if file doesnt exists, then create it
