@@ -94,8 +94,8 @@ public class QueryJobToExportLog {
 		Vector list = new Vector();
 		// Lấy ra đối tượng Connection kết nối vào DB.
 		try {
-			OracleConnUtils conn = new OracleConnUtils();
-			Connection connection = OracleConnUtils.getOracleConnection();
+			MySQLConnUtils conn = new MySQLConnUtils();
+			Connection connection = MySQLConnUtils.getMySQLConnectionToGetLog();
 			// Tạo đối tượng Statement.
 			Statement statement = connection.createStatement();
 			// Query Data from DB
@@ -125,28 +125,28 @@ public class QueryJobToExportLog {
 
 	private String queryString(String jdStartDateRs2, String jdEndDateRs2) {
 		String queryStr = "";
-		queryStr = " select * from aml_bot_log a where a.creating_time between "
+		queryStr = " select * from AML_BOT_LOG_MYSQL a where a.Create_Time between "
 				+ "'"
 				+ jdStartDateRs2
 				+ " ' "
 				+ "and "
 				+ "'"
 				+ jdEndDateRs2
-				+ "'" + " order by a.creating_time ASC";
+				+ "'" + " order by a.Create_Time ASC";
 		return queryStr;
 	}
 
 	private String queryStringFromDatePicker(DatePicker jdStartDateRs2,
 			DatePicker jdEndDateRs2) {
 		String queryStr = "";
-		queryStr = " select * from aml_bot_log a where a.creating_time between "
+		queryStr = " select * from AML_BOT_LOG_MYSQL a where a.Create_Time between "
 				+ "'"
 				+ jdStartDateRs2
 				+ " ' "
 				+ "and "
 				+ "'"
 				+ jdEndDateRs2
-				+ "'" + " order by a.creating_time ASC";
+				+ "'" + " order by a.Create_Time ASC";
 		return queryStr;
 	}
 
