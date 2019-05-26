@@ -17,9 +17,11 @@ import java.awt.event.ActionListener;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
-import java.sql.Date;
 import java.sql.SQLException;
 import java.sql.Time;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -27,9 +29,12 @@ import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.Vector;
 import java.util.concurrent.TimeUnit;
 import java.util.prefs.Preferences;
@@ -65,8 +70,10 @@ import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePicker;
 import com.github.lgooddatepicker.components.TimePickerSettings;
 import com.github.lgooddatepicker.components.TimePickerSettings.TimeArea;
+import com.github.lgooddatepicker.optionalusertools.DateChangeListener;
 import com.github.lgooddatepicker.optionalusertools.DateTimeChangeListener;
 import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
+import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
 import com.github.lgooddatepicker.zinternaltools.DateTimeChangeEvent;
 import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
@@ -86,6 +93,7 @@ public class AML_BOTview extends JFrame {
     static DatePicker jdStartDate;
     DatePicker jdEndDate;
     int period = 0;
+    final LocalDate today = LocalDate.now();
 
     boolean btViewData = false;
     boolean jrdOneTime;
@@ -106,6 +114,8 @@ public class AML_BOTview extends JFrame {
     String StartTimeStr;
     String EndDateStr;
     String EndTimeStr;
+    String fontName = "TimesRoman";
+    Integer fontSize = 13;
 
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -118,6 +128,7 @@ public class AML_BOTview extends JFrame {
     private JTable table;
     DefaultTableModel model;
     JScrollPane scrollPane;
+    Timer timer2;
 
     class DayInfo {
         public DayInfo(Boolean status, String dayOfWeek) {
@@ -211,22 +222,34 @@ public class AML_BOTview extends JFrame {
         // JScrollPane scrollPane = new JScrollPane(showLog);
         Vector<String> cols = new Vector<String>();
         cols.addElement("TT");
-        cols.addElement("Loai");
-        cols.addElement("Thoi gian thuc hien");
-        cols.addElement("Ten Tep");
-        cols.addElement("Trang thai");
-        cols.addElement("Duong dan");
-        cols.addElement("Ghi chu");
+        cols.addElement("Loại");
+        cols.addElement("Thời gian thực hiện");
+        cols.addElement("Tên tệp");
+        cols.addElement("Trạng thái");
+        cols.addElement("Đường dẫn");
+        cols.addElement("Ghi chú");
         model = new DefaultTableModel(null, cols);
         model.fireTableDataChanged();
         table = new JTable(model);
         scrollPane = new JScrollPane(table);
 
         JLabel fromDate = createLabel("Từ ngày: ");
-        JLabel toDate = createLabel("Tới ngày: ");
+        JLabel toDate = createLabel("Đến ngày: ");
 
-        DatePicker jdStartDateRs = generateDatePickerStart();
-        DatePicker jdEndDateRs = generateDatePickerStart();
+        DatePickerSettings dateSettingsEndDatePicker = new DatePickerSettings();
+        DatePicker jdStartDateRs = new DatePicker();
+        jdStartDateRs.addDateChangeListener(new DateChangeListener() {
+
+            @Override
+            public void dateChanged(DateChangeEvent arg0) {
+                dateSettingsEndDatePicker.setDateRangeLimits(
+                        today.minusDays(getDiffWithTodayByDay(jdStartDateRs)),
+                        today.plusDays(3000));
+
+            }
+        });
+
+        DatePicker jdEndDateRs = new DatePicker(dateSettingsEndDatePicker);
         JButton btView = createButton("Hiển thị báo cáo");
 
         btView.addActionListener(e -> {
@@ -297,7 +320,7 @@ public class AML_BOTview extends JFrame {
         intervalSimplePanelPosition(c, 0, 1);
         c.gridwidth = 1;
         recurPanelPostion(c, 0, 0);
-        c.insets = new Insets(10, 70, 0, 0);
+        c.insets = new Insets(10, 30, 0, 0);
         panelResult.add(fromDate, c);
 
         c.fill = GridBagConstraints.LINE_START;
@@ -309,7 +332,7 @@ public class AML_BOTview extends JFrame {
         c.fill = GridBagConstraints.HORIZONTAL;
         intervalSimplePanelPosition(c, 2, 1);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 50, 0, 0);
+        c.insets = new Insets(10, 0, 0, 0);
         panelResult.add(toDate, c);
 
         c.fill = GridBagConstraints.LINE_START;
@@ -359,7 +382,7 @@ public class AML_BOTview extends JFrame {
 
     private JPanel createPanelEstablish() throws Exception {
         SingleTaskTimer timer = new SingleTaskTimer();
-        final LocalDate today = LocalDate.now();
+
         JPanel panelEstablish = new JPanel();
         GridBagConstraints cEstablish = new GridBagConstraints();
         GridBagLayout layoutEstablish = new GridBagLayout();
@@ -443,7 +466,7 @@ public class AML_BOTview extends JFrame {
         ButtonGroup buttonGroupRadio = new ButtonGroup();
         buttonGroupRadio.add(r1);
         r1.setText("Một lần");
-        r1.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        r1.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         r1.setEnabled(false);
         r1.addActionListener(new ActionListener() {
 
@@ -459,7 +482,7 @@ public class AML_BOTview extends JFrame {
         });
         buttonGroupRadio.add(r2);
         r2.setText("Hàng ngày");
-        r2.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        r2.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         r2.setEnabled(false);
         r2.addActionListener(new ActionListener() {
 
@@ -526,7 +549,7 @@ public class AML_BOTview extends JFrame {
 
         // add label Start to Panel Setting:
         JLabel startLb = new JLabel("Bắt đầu: 	");
-        startLb.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        startLb.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
         intervalSimplePanelPosition(cStartTime, 0, 0);
@@ -540,7 +563,7 @@ public class AML_BOTview extends JFrame {
         // Font.ITALIC | Font.BOLD, 17));
         timePickerSettingsStart.setInitialTimeToNow();
         timePickerSettingsStart.setFormatForDisplayTime(PickerUtilities
-                .createFormatterFromPatternString("HH:mm:ss",
+                .createFormatterFromPatternString("HH:mm",
                         timePickerSettingsStart.getLocale()));
 
         DatePickerSettings datePickerSettingsStart = new DatePickerSettings();
@@ -590,7 +613,7 @@ public class AML_BOTview extends JFrame {
 
         // add label Start to Panel Setting:
         JLabel stopLb = new JLabel("Kết thúc: 	");
-        stopLb.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        stopLb.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
         intervalSimplePanelPosition(cStartTime, 0, 1);
@@ -602,7 +625,7 @@ public class AML_BOTview extends JFrame {
         TimePickerSettings timeSettingsStop = new TimePickerSettings();
         timeSettingsStop.setInitialTimeToNow();
         timeSettingsStop.setFormatForDisplayTime(PickerUtilities
-                .createFormatterFromPatternString("HH:mm:ss",
+                .createFormatterFromPatternString("HH:mm",
                         timeSettingsStop.getLocale()));
 
         DateTimePicker dateTimePickerStop = new DateTimePicker(
@@ -646,8 +669,8 @@ public class AML_BOTview extends JFrame {
         panelInterval.setLayout(layoutInterval);
 
         JLabel intervalPeriod = createLabel("Chu kỳ lặp lại: ");
-        intervalPeriod
-                .setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        intervalPeriod.setFont(new Font(fontName, Font.CENTER_BASELINE,
+                fontSize));
         cInterval.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cInterval, 0, 0);
         startTimePanelPosition(cInterval, 0, 0);
@@ -701,34 +724,16 @@ public class AML_BOTview extends JFrame {
         panelRecur.setBorder(blacklineRecur);
         panelRecur.setBackground(Color.white);
 
-        // Checkbox Sunday
-        cbSunday.setText("Chủ nhật");
-        cbSunday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
-        taskControlPanelPosition(cRecur, 0, 0);
-        cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 2);
-        cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
-        panelRecur.add(cbSunday, cRecur);
-        cbSunday.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent arg0) {
-                if (cbSunday.isSelected()) {
-                    cBDayOfWeekStatus(cbSunday, cbSunday.isSelected());
-                }
-            }
-        });
-
         // Checkbox Monday
         // JCheckBox cbMonday = new JCheckBox("Monday");
-        taskControlPanelPosition(cRecur, 0, 0);
+
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 0);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         panelRecur.add(cbMonday, cRecur);
         cbMonday.setText("Thứ hai");
-        cbMonday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbMonday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cbMonday.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
@@ -739,14 +744,13 @@ public class AML_BOTview extends JFrame {
         });
 
         // Checkbox Tuesday
-        taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         cbTuesday.setText("Thứ ba");
         ;
-        cbTuesday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbTuesday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         panelRecur.add(cbTuesday, cRecur);
         cbTuesday.addActionListener(new ActionListener() {
             @Override
@@ -758,14 +762,13 @@ public class AML_BOTview extends JFrame {
         });
 
         // Checkbox Wednesday
-        taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 2);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         cbWednesday.setText("Thứ tư");
         ;
-        cbWednesday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbWednesday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         panelRecur.add(cbWednesday, cRecur);
         cbWednesday.addActionListener(new ActionListener() {
             @Override
@@ -777,14 +780,13 @@ public class AML_BOTview extends JFrame {
         });
 
         // Checkbox Thursday
-        taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 1, 3);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         cbThursday.setText("Thứ năm");
         ;
-        cbThursday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbThursday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         panelRecur.add(cbThursday, cRecur);
         cbThursday.addActionListener(new ActionListener() {
             @Override
@@ -796,15 +798,14 @@ public class AML_BOTview extends JFrame {
         });
 
         // Checkbox Friday
-        taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 0);
         cRecur.gridwidth = 1;
         recurPanelPostion(cRecur, 1, 4);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         cbFriday.setText("Thứ sáu");
-        cbFriday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbFriday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         panelRecur.add(cbFriday, cRecur);
         cbFriday.addActionListener(new ActionListener() {
             @Override
@@ -816,19 +817,35 @@ public class AML_BOTview extends JFrame {
         });
 
         // Checkbox Saturday
-        taskControlPanelPosition(cRecur, 0, 0);
         cRecur.fill = GridBagConstraints.HORIZONTAL;
         startTimePanelPosition(cRecur, 2, 1);
         cRecur.anchor = GridBagConstraints.LINE_START;
-        cRecur.insets = new Insets(20, 0, 0, 30);
+        cRecur.insets = new Insets(5, 0, 0, 10);
         cbSaturday.setText("Thứ bảy");
-        cbSaturday.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        cbSaturday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         panelRecur.add(cbSaturday, cRecur);
         cbSaturday.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent arg0) {
                 if (cbSaturday.isSelected()) {
                     cBDayOfWeekStatus(cbSaturday, cbSaturday.isSelected());
+                }
+            }
+        });
+
+        // Checkbox Sunday
+        cbSunday.setText("Chủ nhật");
+        cbSunday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
+        cRecur.fill = GridBagConstraints.HORIZONTAL;
+        startTimePanelPosition(cRecur, 2, 2);
+        cRecur.anchor = GridBagConstraints.LINE_START;
+        cRecur.insets = new Insets(5, 0, 0, 10);
+        panelRecur.add(cbSunday, cRecur);
+        cbSunday.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                if (cbSunday.isSelected()) {
+                    cBDayOfWeekStatus(cbSunday, cbSunday.isSelected());
                 }
             }
         });
@@ -840,7 +857,7 @@ public class AML_BOTview extends JFrame {
         taskControlPanelPosition(cSetting, 1, 2);
         settingPanelWidthAndHeight(cSetting, 1, 2);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(0, -70, -20, 0);
+        cSetting.insets = new Insets(0, -100, 30, 0);
         panelSetting.add(panelIntervalSimple, cSetting);
         panelSetting.setBackground(Color.white);
 
@@ -884,7 +901,8 @@ public class AML_BOTview extends JFrame {
 
         // Label Save textField
         JLabel lbSaveFolder = new JLabel("Đường dẫn:");
-        lbSaveFolder.setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        lbSaveFolder
+                .setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cSaveSetting.fill = GridBagConstraints.FIRST_LINE_START;
         startTimePanelPosition(cSaveSetting, 0, 0);
         cSaveSetting.anchor = GridBagConstraints.LINE_START; // bottom of
@@ -921,8 +939,8 @@ public class AML_BOTview extends JFrame {
         Border blacklineTxtSaveFolder = BorderFactory
                 .createLineBorder(Color.LIGHT_GRAY);
         textSaveFolder.setBorder(blacklineTxtSaveFolder);
-        textSaveFolder
-                .setFont(new Font("TimesRoman", Font.CENTER_BASELINE, 16));
+        textSaveFolder.setFont(new Font(fontName, Font.CENTER_BASELINE,
+                fontSize));
         cSaveSetting.fill = GridBagConstraints.FIRST_LINE_START;
         startTimePanelPosition(cSaveSetting, 0, 1);
         cSaveSetting.weightx = 2.0;
@@ -930,8 +948,7 @@ public class AML_BOTview extends JFrame {
         // space
         cSaveSetting.insets = new Insets(5, 10, 10, 10);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
-
-		loadFileAndReturnElement();
+        // loadFileAndReturnElement();
         // if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
         System.out
                 .println("==================================Loading last status=========================================");
@@ -939,17 +956,16 @@ public class AML_BOTview extends JFrame {
         r1.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(0)));
         r2.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(1)));
 
-        if(r1.isSelected()) {
+        if (r1.isSelected()) {
             period = 1;
             textIntervalPeriod.setEnabled(false);
             System.out.println(period);
-        }
-        else if (r2.isSelected()) {
+        } else if (r2.isSelected()) {
             if (textIntervalPeriod.getValue().toString().equals("0")) {
-                period = 24*60;
-            }
-            else {
-                period = Integer.parseInt(textIntervalPeriod.getValue().toString());
+                period = 24 * 60;
+            } else {
+                period = Integer.parseInt(textIntervalPeriod.getValue()
+                        .toString());
             }
         }
 
@@ -1105,7 +1121,16 @@ public class AML_BOTview extends JFrame {
 
         // Start Button
 
-        btStop.addActionListener(e -> timer.cancel());
+        btStop.addActionListener(new ActionListener() {
+
+            @Override
+            public void actionPerformed(ActionEvent arg0) {
+                timer.cancel();
+                timer2.cancel();
+
+            }
+        });
+        ;
         cTaskControl.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cTaskControl, 0, 3);
         // startTimePanelPosition(cTaskControl, 0, 3);
@@ -1321,6 +1346,13 @@ public class AML_BOTview extends JFrame {
         return getDiffWithTodayByDay;
     }
 
+    private long getDiffWithTodayByDay(DatePicker dateStart) {
+        final LocalDate today = LocalDate.now();
+        long getDiffWithTodayByDay = today.toEpochDay()
+                - dateStart.getDate().toEpochDay();
+        return getDiffWithTodayByDay;
+    }
+
     private void checkDateStop(JTextField textFieldRecur, JCheckBox cbMonday,
                                JCheckBox cbSunday, JCheckBox cbTuesday, JCheckBox cbWednesday,
                                JCheckBox cbThursday, JCheckBox cbFriday, JCheckBox cbSaturday,
@@ -1431,16 +1463,94 @@ public class AML_BOTview extends JFrame {
                 calStart.set(date.getYear(), date.getMonthValue() - 1,
                         date.getDayOfMonth());
                 System.out.println(calStart.toString());
-                saveFile(timer, textIntervalPeriod, txtSaveFolder, calEnd,
-                        calStart);
+                downloadFileByDayOfWeek(timer, textIntervalPeriod,
+                        txtSaveFolder, calEnd, calStart);
             }
         } else {
-            saveFile(timer, textIntervalPeriod, txtSaveFolder, calEnd, calStart);
+
+            if (!textIntervalPeriod.equals("0")) {
+                period = Integer.parseInt(textIntervalPeriod);
+            }
+            timer2 = new Timer();
+            timer2.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    System.out.println("Running!");
+                    downloadFileDaily(txtSaveFolder);
+                    try {
+
+                        // String dateStrStop = "2019-05-23 14:47";
+                        DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+                        // DateFormat formatter = new
+                        // SimpleDateFormat("E MMM dd HH:mm Z
+                        // yyyy");
+                        Date dateNow = new Date();
+                        dateNow.setSeconds(00);
+                        Date datePause = new Date();
+                        datePause.setHours(17);
+                        datePause.setMinutes(19);
+                        datePause.setSeconds(00);
+
+                        if (dateNow.compareTo(calEnd.getTime()) > 0) {
+                            System.out.println("Stop!");
+                            timer2.cancel();
+                        }
+
+                        if (dateNow.compareTo(datePause) >= 0) {
+                            System.out.println("Sleeping!");
+
+                            try {
+                                Date dateNow2 = new Date();
+                                String time1 = dateNow2.getHours() + ":"
+                                        + dateNow2.getMinutes();
+                                String time2 = "17:23";
+                                SimpleDateFormat format = new SimpleDateFormat(
+                                        "HH:mm");
+                                Date date1;
+                                date1 = format.parse(time1);
+                                Date date2 = format.parse(time2);
+                                long totalTimeSleep;
+                                System.out.println(dateNow2);
+                                if (date1.compareTo(date2) < 0) {
+                                    totalTimeSleep = (date2.getTime() - date1
+                                            .getTime());
+                                } else {
+                                    totalTimeSleep = (date2.getTime() - date1
+                                            .getTime()) + (24 * 60 * 60 * 1000);
+                                }
+                                Thread.sleep(totalTimeSleep);
+                            } catch (ParseException e) {
+                                // TODO Auto-generated catch block
+                                e.printStackTrace();
+                            }
+
+                            System.out.println("Wake up!");
+                        }
+                    } catch (InterruptedException e) {
+                        // TODO Auto-generated catch block
+                        e.printStackTrace();
+                    }
+                }
+            }, calStart.getTime(), TimeUnit.MILLISECONDS.convert(period,
+                    TimeUnit.MINUTES));
+            System.out.println("period: "
+                    + TimeUnit.MILLISECONDS.convert(period, TimeUnit.MINUTES));
         }
     }
 
-    private void saveFile(SingleTaskTimer timer, String textIntervalPeriod,
-                          JTextArea txtSaveFolder, Calendar calEnd, Calendar calStart) {
+    private void downloadFileDaily(JTextArea txtSaveFolder) {
+        downloadFolder = txtSaveFolder.getText();
+        File dir = new File(downloadFolder);
+        if (!dir.exists()) {
+            downloadFolder = defaultPathString();
+        }
+        StartTask startTask = new StartTask(downloadFolder);
+        startTask.run();
+    }
+
+    private void downloadFileByDayOfWeek(SingleTaskTimer timer,
+                                         String textIntervalPeriod, JTextArea txtSaveFolder,
+                                         Calendar calEnd, Calendar calStart) {
         if (!textIntervalPeriod.equals("0")) {
             period = Integer.parseInt(textIntervalPeriod);
         }
@@ -1453,9 +1563,10 @@ public class AML_BOTview extends JFrame {
         if (!dir.exists()) {
             downloadFolder = defaultPathString();
         }
+        System.out.println(calEnd.getTime());
+
         timer.setTask(new StartTask(downloadFolder));
         timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
-
     }
 
     private void saveRecentEstablishTabStatus(Boolean oneTime, Boolean daily,
@@ -1489,7 +1600,7 @@ public class AML_BOTview extends JFrame {
          * System.out
          * .println("=====================================================");
          */
-        // System.out.println("String has split by \"/\" ");
+        // System.out.println("String has split by \"/@" ");
         int i = 0;
         while ((st = br.readLine()) != null) {
             String s1 = st;
