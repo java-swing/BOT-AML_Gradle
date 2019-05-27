@@ -38,10 +38,10 @@ public class QueryJobToExportLog {
 
 	public LinkedList<String> getQueryJobToExportLog()
 			throws ClassNotFoundException, SQLException {
-		OracleConnUtils conn = new OracleConnUtils();
+		MySQLConnUtils conn = new MySQLConnUtils();
 
 		// Lấy ra đối tượng Connection kết nối vào DB.
-		Connection connection = OracleConnUtils.getOracleConnection();
+		Connection connection = MySQLConnUtils.getMySQLConnectionToGetLog();
 
 		// Tạo đối tượng Statement.
 		Statement statement = connection.createStatement();

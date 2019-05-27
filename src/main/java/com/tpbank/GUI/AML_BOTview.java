@@ -54,8 +54,12 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
+import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
 import javax.swing.border.Border;
+import javax.swing.border.EtchedBorder;
+import javax.swing.border.LineBorder;
+import javax.swing.border.TitledBorder;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
 import javax.swing.event.DocumentEvent;
@@ -79,8 +83,8 @@ import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
 import com.tpbank.dbJob.QueryJobToExportLog;
 import com.tpbank.dbJob.QueryJobToImportRecentStatus;
-import com.tpbank.writeToPdf.SaveEstablishInTxtFile;
-import com.tpbank.writeToPdf.WriteLogToPdf;
+import com.tpbank.writeToFile.SaveEstablishInTxtFile;
+import com.tpbank.writeToFile.WriteLogToPdf;
 
 public class AML_BOTview extends JFrame {
 
@@ -200,7 +204,7 @@ public class AML_BOTview extends JFrame {
         tablePane.addTab("Monitor", null, panelMonitor);
         tablePane.addTab("Báo cáo", null, panelResult);
         tablePane.addTab("Thiết lập", null, panelEstablish);
-        tablePane.setSelectedIndex(tablePane.getTabCount() - 1);
+        tablePane.setSelectedIndex(tablePane.getTabCount() - 2);
 
         return tablePane;
     }
@@ -214,12 +218,6 @@ public class AML_BOTview extends JFrame {
 
         GridBagConstraints c = new GridBagConstraints();
 
-        // JTextArea showLog = createTextArea(10, 40);
-        //
-        // showLog.append("TT\t Loại\t Thời gian\t Tên \t Trạng thái \t Đường dẫn lưu file \t Ghi chú \n");
-        // showLog.setEditable(false);
-        //
-        // JScrollPane scrollPane = new JScrollPane(showLog);
         Vector<String> cols = new Vector<String>();
         cols.addElement("TT");
         cols.addElement("Loại");
@@ -238,6 +236,9 @@ public class AML_BOTview extends JFrame {
 
         DatePickerSettings dateSettingsEndDatePicker = new DatePickerSettings();
         DatePicker jdStartDateRs = new DatePicker();
+        DatePicker jdEndDateRs = new DatePicker(dateSettingsEndDatePicker);
+        jdEndDateRs.setEnabled(false);
+
         jdStartDateRs.addDateChangeListener(new DateChangeListener() {
 
             @Override
@@ -245,11 +246,12 @@ public class AML_BOTview extends JFrame {
                 dateSettingsEndDatePicker.setDateRangeLimits(
                         today.minusDays(getDiffWithTodayByDay(jdStartDateRs)),
                         today.plusDays(3000));
+                jdEndDateRs.setEnabled(true);
 
             }
         });
 
-        DatePicker jdEndDateRs = new DatePicker(dateSettingsEndDatePicker);
+
         JButton btView = createButton("Hiển thị báo cáo");
 
         btView.addActionListener(e -> {
@@ -295,7 +297,7 @@ public class AML_BOTview extends JFrame {
                 // WriteLogToPdf createPdf = new WriteLogToPdf(log, nameFile);
                 // createPdf.createTextToAPdf(log, nameFile);
 
-                com.tpbank.writeToPdf.WriteLogToTable createTableLog = new com.tpbank.writeToPdf.WriteLogToTable(
+                com.tpbank.writeToFile.WriteLogToTable createTableLog = new com.tpbank.writeToFile.WriteLogToTable(
                         log, nameFile);
                 createTableLog.drawTablePDF(log, nameFile);
 
@@ -312,72 +314,70 @@ public class AML_BOTview extends JFrame {
         c.ipady = 200; // make this component tall
         c.ipadx = 100; // make this component tall
         c.weightx = 0.0;
-        c.gridwidth = 4; // 5 columns wide
-        intervalSimplePanelPosition(c, 0, 0);
+        c.gridwidth = 6; // 5 columns wide
+        positionInPanel(c, 0, 0);
         panelResult.add(scrollPane, c);
 
         c.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(c, 0, 1);
+        positionInPanel(c, 0, 1);
         c.gridwidth = 1;
         recurPanelPostion(c, 0, 0);
-        c.insets = new Insets(10, 30, 0, 0);
+        c.insets = new Insets(10, 60, 0, 0);
         panelResult.add(fromDate, c);
 
         c.fill = GridBagConstraints.LINE_START;
-        intervalSimplePanelPosition(c, 1, 1);
+        positionInPanel(c, 1, 1);
         c.gridwidth = 1;
-        c.insets = new Insets(10, -200, 0, 0);
+        c.insets = new Insets(10, -180, 0, 0);
         panelResult.add(jdStartDateRs, c);
 
         c.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(c, 2, 1);
+        positionInPanel(c, 2, 1);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 0, 0, 0);
+        c.insets = new Insets(10, 50, 0, 0);
         panelResult.add(toDate, c);
 
         c.fill = GridBagConstraints.LINE_START;
-        intervalSimplePanelPosition(c, 3, 1);
+        positionInPanel(c, 3, 1);
         c.gridwidth = 1;
         c.weightx = 30;
-        c.insets = new Insets(10, -230, 0, 80);
+        c.insets = new Insets(10, -188, 0, 80);
         panelResult.add(jdEndDateRs, c);
 
-        c.fill = GridBagConstraints.CENTER;
-        intervalSimplePanelPosition(c, 0, 3);
+        c.fill = GridBagConstraints.LINE_START;
+        positionInPanel(c, 0, 3);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 30, 0, 0);
+        c.insets = new Insets(10, 95, 0, 0);
         panelResult.add(btExport, c);
 
-        c.fill = GridBagConstraints.CENTER;
-        intervalSimplePanelPosition(c, 2, 3);
+        c.fill = GridBagConstraints.LINE_START;
+        positionInPanel(c, 2, 3);
         c.gridwidth = 1;
-        c.insets = new Insets(10, 30, 0, 0);
+        c.insets = new Insets(10, 90, 0, 0);
         panelResult.add(btView, c);
         return panelResult;
     }
 
     private JPanel createPanelMonitor() throws ClassNotFoundException,
             SQLException {
-        JPanel panel = new JPanel();
+        JPanel panelMonitor = new JPanel();
 
         GridBagLayout layout = new GridBagLayout();
-        panel.setLayout(layout);
+        panelMonitor.setLayout(layout);
 
-        GridBagConstraints c = new GridBagConstraints();
+        GridBagConstraints cMonitorPanel = new GridBagConstraints();
 
-        JTextArea showLog = createTextArea(20, 200);
-        showLog.setEditable(false);
-        // JScrollPane scrollPane = new JScrollPane(
-        // viewTableLog(queryJob.getQueryJobToExportLog()));
+        panelMonitor.setBorder(new TitledBorder(new EtchedBorder(),
+                "Công việc đang thực hiện"));
 
-        c.fill = GridBagConstraints.CENTER;
-        recurPanelPostion(c, 40, 40);
-        c.weightx = 0.0;
-        c.gridwidth = 3; // 2 columns wide
-        intervalSimplePanelPosition(c, 0, 0);
-        // panel.add(scrollPane, c);
+        JTextArea display = new JTextArea(16, 58);
+        display.setEditable(false); // set textArea non-editable
+        JScrollPane scroll = new JScrollPane(display);
+        scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
+        scroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_ALWAYS);
+        panelMonitor.add(scroll);
 
-        return panel;
+        return panelMonitor;
     }
 
     private JPanel createPanelEstablish() throws Exception {
@@ -527,14 +527,14 @@ public class AML_BOTview extends JFrame {
         // ======== panelIntervalSimple=========================
         // RadioButton "One time"
         cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cIntervalSimple, 0, 0);
+        positionInPanel(cIntervalSimple, 0, 0);
         cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
         cIntervalSimple.insets = new Insets(10, 5, 5, 0);
         panelIntervalSimple.add(r1, cIntervalSimple);
 
         // RadioButton "Daily"
         cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cIntervalSimple, 0, 1);
+        positionInPanel(cIntervalSimple, 0, 1);
         cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
         cIntervalSimple.insets = new Insets(10, 5, 10, 10);
         panelIntervalSimple.add(r2, cIntervalSimple);
@@ -552,7 +552,7 @@ public class AML_BOTview extends JFrame {
         startLb.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
-        intervalSimplePanelPosition(cStartTime, 0, 0);
+        positionInPanel(cStartTime, 0, 0);
         cStartTime.anchor = GridBagConstraints.LINE_START;
         cStartTime.insets = new Insets(10, 10, 10, 10);
         panelStartTime.add(startLb, cStartTime);
@@ -616,7 +616,7 @@ public class AML_BOTview extends JFrame {
         stopLb.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cStartTime.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cStartTime, 0, 0);
-        intervalSimplePanelPosition(cStartTime, 0, 1);
+        positionInPanel(cStartTime, 0, 1);
         cStartTime.anchor = GridBagConstraints.LINE_START;
         cStartTime.insets = new Insets(5, 10, 10, 10);
         panelStartTime.add(stopLb, cStartTime);
@@ -799,7 +799,7 @@ public class AML_BOTview extends JFrame {
 
         // Checkbox Friday
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 0);
+        startTimePanelPosition(cRecur, 1, 4);
         cRecur.gridwidth = 1;
         recurPanelPostion(cRecur, 1, 4);
         cRecur.anchor = GridBagConstraints.LINE_START;
@@ -818,7 +818,7 @@ public class AML_BOTview extends JFrame {
 
         // Checkbox Saturday
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 1);
+        startTimePanelPosition(cRecur, 1, 5);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(5, 0, 0, 10);
         cbSaturday.setText("Thứ bảy");
@@ -837,7 +837,7 @@ public class AML_BOTview extends JFrame {
         cbSunday.setText("Chủ nhật");
         cbSunday.setFont(new Font(fontName, Font.CENTER_BASELINE, fontSize));
         cRecur.fill = GridBagConstraints.HORIZONTAL;
-        startTimePanelPosition(cRecur, 2, 2);
+        startTimePanelPosition(cRecur, 1, 6);
         cRecur.anchor = GridBagConstraints.LINE_START;
         cRecur.insets = new Insets(5, 0, 0, 10);
         panelRecur.add(cbSunday, cRecur);
@@ -852,39 +852,41 @@ public class AML_BOTview extends JFrame {
 
         // ============ panel StartTime to add Panel Setting===================
         // add Panel Setting to panel StartTime
-        cSetting.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cSetting, 0, 0);
-        taskControlPanelPosition(cSetting, 1, 2);
+        cSetting.fill = GridBagConstraints.LINE_START;
+        positionInPanel(cSetting, 0, 0);
         settingPanelWidthAndHeight(cSetting, 1, 2);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(0, -100, 30, 0);
+        cSetting.insets = new Insets(-10, 5, 30, 0);
+        cSetting.weightx = 0.5; // request any extra HORIZONTAL space
+        cSetting.ipadx = 5;
+        cSetting.gridwidth = 2;
         panelSetting.add(panelIntervalSimple, cSetting);
         panelSetting.setBackground(Color.white);
 
         // add panel StartTime to panel Setting
         cSetting.fill = GridBagConstraints.LINE_START;
-        intervalSimplePanelPosition(cSetting, 1, 0);
+        // intervalSimplePanelPosition(cSetting, 1, 0);
         settingPanelWidthAndHeight(cSetting, 4, 1);
-        taskControlPanelPosition(cSetting, 1, 1);
         cSetting.anchor = GridBagConstraints.LINE_START;
         cSetting.ipadx = 2;
-        cSetting.insets = new Insets(10, 5, -20, 0);
+        cSetting.gridwidth = 4;
+        cSetting.insets = new Insets(-10, 150, -20, 0);
         panelSetting.add(panelStartTime, cSetting);
 
         // add panel StartTime to panel Setting
         cSetting.fill = GridBagConstraints.LINE_START;
-        intervalSimplePanelPosition(cSetting, 1, 1);
+        positionInPanel(cSetting, 1, 1);
         settingPanelWidthAndHeight(cSetting, 4, 1);
-        taskControlPanelPosition(cSetting, 1, 1);
         cSetting.anchor = GridBagConstraints.LINE_START;
-        cSetting.insets = new Insets(20, 5, 0, 0);
+        cSetting.insets = new Insets(15, 150, 0, 0);
         panelSetting.add(panelInterval, cSetting);
 
         // add panel Recur to panel Setting
         cSetting.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cSetting, 0, 2);
-        taskControlPanelPosition(cSetting, 0, 0);
+        cSetting.weightx = 1.0; // request any extra HORIZONTAL space
+        positionInPanel(cSetting, 0, 2);
         settingPanelWidthAndHeight(cSetting, 0, 0);
+        cSetting.gridwidth = 6;
         cSetting.anchor = GridBagConstraints.LINE_START;
         cSetting.insets = new Insets(5, 5, 10, 10);
         panelSetting.add(panelRecur, cSetting);
@@ -1142,50 +1144,42 @@ public class AML_BOTview extends JFrame {
         // ========== add Panel Save folder to panel
         // Save Setting=======================
         // add Panel Setting to panel
-        cSaveSetting.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cSaveSetting, 0, 4);
-        taskControlPanelPosition(cSaveSetting, 0, 0);
-        cSaveSetting.insets = new Insets(5, 0, 0, 0);
-        panelSaveSetting.add(panelTaskControl, cSaveSetting);
+        // cSaveSetting.fill = GridBagConstraints.HORIZONTAL;
+        // positionInPanel(cSaveSetting, 0, 4);
+        // taskControlPanelPosition(cSaveSetting, 0, 0);
+        // cSaveSetting.insets = new Insets(20, 0, 0, 0);
+        // panelSaveSetting.add(panelTaskControl, cSaveSetting);
 
         // ========== add Panel Setting to panel
         // Establish=======================
         // add Panel Setting to panel
         cEstablish.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cEstablish, 0, 0);
+        positionInPanel(cEstablish, 0, 0);
         taskControlPanelPosition(cEstablish, 0, 0);
         cEstablish.ipadx = 75;
         cEstablish.ipady = 50;
         cEstablish.weightx = 40;
-        cEstablish.insets = new Insets(-70, -20, 0, 0);
+        cEstablish.insets = new Insets(-50, -20, 0, 0);
         panelEstablish.add(panelSetting, cEstablish);
 
         // Establish=======================
         // add Panel Advance Setting to panel
         cEstablish.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cEstablish, 0, 1);
+        positionInPanel(cEstablish, 0, 1);
         taskControlPanelPosition(cEstablish, 0, 0);
-        cEstablish.insets = new Insets(0, 0, 0, 0);
+        cEstablish.insets = new Insets(10, 0, 0, 0);
         panelEstablish.add(panelSaveSetting, cEstablish);
 
         // Establish=======================
         // add Panel Advance Setting to panel
         cEstablish.fill = GridBagConstraints.HORIZONTAL;
-        intervalSimplePanelPosition(cEstablish, 0, 2);
+        positionInPanel(cEstablish, 0, 2);
         taskControlPanelPosition(cEstablish, 0, 0);
-        cEstablish.insets = new Insets(0, 0, 0, 0);
+        cEstablish.insets = new Insets(15, 0, 0, 0);
         panelEstablish.add(panelTaskControl, cEstablish);
 
         return panelEstablish;
     }
-
-    // private void actionBtnStart(SingleTaskTimer timer,
-    // JSpinner textIntervalPeriod, DateTimePicker dateTimePickerStart2,
-    // DateTimePicker dateTimePickerStop, JTextArea textSaveFolder,
-    // ArrayList<LocalDate> dateStartArr2) {
-    // // TODO Auto-generated method stub
-    //
-    // }
 
     private void cBDayOfWeekStatus(JCheckBox cbox, boolean cbStatus) {
         System.out.println(cbox.getText().toUpperCase() + ": " + cbStatus);
@@ -1225,8 +1219,8 @@ public class AML_BOTview extends JFrame {
         cStartTime.gridx = i2;
     }
 
-    private void intervalSimplePanelPosition(
-            GridBagConstraints cIntervalSimple, int i, int i2) {
+    private void positionInPanel(GridBagConstraints cIntervalSimple, int i,
+                                 int i2) {
         cIntervalSimple.gridx = i;
         cIntervalSimple.gridy = i2;
     }

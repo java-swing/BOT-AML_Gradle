@@ -1,4 +1,4 @@
-package com.tpbank.writeToPdf;
+package com.tpbank.writeToFile;
 
 import java.io.File;
 import java.io.FileOutputStream;
