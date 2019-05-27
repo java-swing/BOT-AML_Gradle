@@ -28,12 +28,12 @@ public class WriteLogToTable {
 	public static final String FONT = "font/vuTimes.ttf";
 	public static final int fontTitleSize = 13;
 	public static final int fontTitleTableSize = 12;
-	public static final int fontContentTableSize = 11;
+//	public static final int fontContentTableSize = 11;
 
 	public void drawTablePDF(LinkedList<String> logLinkedList, String nameFile)
 			throws Exception {
 
-		String DEST = "/home/thanhdinh/IdeaProjects/JavaSwing/PDFBox" + nameFile + ".pdf";
+		String DEST = "/home/thanhdinh/IdeaProjects/JavaSwing/PDFBox/" + nameFile + ".pdf";
 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(DEST));
 		PdfFont font = PdfFontFactory.createFont(FONT, BaseFont.IDENTITY_H,
@@ -107,7 +107,7 @@ public class WriteLogToTable {
 
 	private void addCell(Table table, String header, boolean check) {
 		Cell cell = new Cell();
-//		Cell add = cell.add(header);
+		Cell add = cell.add(header);
 		if (check == true) {
 			cell.setBold();
 		}
@@ -117,3 +117,4 @@ public class WriteLogToTable {
 	}
 
 }
+/*set A4 for this page and re-test*/

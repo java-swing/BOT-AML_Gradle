@@ -950,7 +950,7 @@ public class AML_BOTview extends JFrame {
         // space
         cSaveSetting.insets = new Insets(5, 10, 10, 10);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
-        // loadFileAndReturnElement();
+//         loadFileAndReturnElement();
         // if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
         System.out
                 .println("==================================Loading last status=========================================");
