@@ -1,0 +1,8 @@
+IPHONE|Individual
+Samsung|ORGANISATION
+Loi|Individual
+Huy|ORGANISATION
+Bang|Individual
+cuong|ORGANISATION
+Ngoc|Individual
+Ly|ORGANISATION

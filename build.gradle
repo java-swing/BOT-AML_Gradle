@@ -38,6 +38,7 @@ dependencies {
     compile group: 'com.itextpdf', name: 'kernel', version: '7.0.4'
 //    compile group: 'com.itextpdf', name: 'layout', version: '7.1.4'
     compile group: 'com.itextpdf', name: 'layout', version: '7.0.4'
+    compile group: 'log4j', name: 'log4j', version: '1.2.17'
 
 
 }

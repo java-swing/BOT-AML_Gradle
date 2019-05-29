@@ -20,19 +20,24 @@ import java.io.FileReader;
 import java.sql.SQLException;
 import java.sql.Time;
 import java.text.DateFormat;
+import java.text.Format;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.time.DayOfWeek;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.Iterator;
 import java.util.LinkedList;
+import java.util.List;
 import java.util.Locale;
+import java.util.TimeZone;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.Vector;
@@ -56,6 +61,7 @@ import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.SpinnerNumberModel;
+import javax.swing.SwingUtilities;
 import javax.swing.border.Border;
 import javax.swing.border.EtchedBorder;
 import javax.swing.border.LineBorder;
@@ -83,6 +89,7 @@ import com.tpbank.control.SingleTaskTimer;
 import com.tpbank.control.StartTask;
 import com.tpbank.dbJob.QueryJobToExportLog;
 import com.tpbank.dbJob.QueryJobToImportRecentStatus;
+import com.tpbank.writeToFile.ReadFromFile2;
 import com.tpbank.writeToFile.SaveEstablishInTxtFile;
 import com.tpbank.writeToFile.WriteLogToPdf;
 
@@ -90,9 +97,16 @@ public class AML_BOTview extends JFrame {
 
     private static final int ArrayList = 0;
 
-    private String downloadFolder = defaultPathString();
+    private static final DateTimePicker DateTimePicker = null;
+
+    public static String printLogOut = "";
+
+    public static final String saveEstablishStatus = "SaveEstablishLastStatus/saveEstablish.txt";
+
+    public static String downloadFolder = defaultPathString();
 
     private DateTimePicker dateTimePickerStart = new DateTimePicker();
+    private DateTimePicker dateTimePickerStop = new DateTimePicker();
     private ArrayList<LocalDate> dateStartArr = new ArrayList<LocalDate>();
     static DatePicker jdStartDate;
     DatePicker jdEndDate;
@@ -120,6 +134,7 @@ public class AML_BOTview extends JFrame {
     String EndTimeStr;
     String fontName = "TimesRoman";
     Integer fontSize = 13;
+    static JTextArea display;
 
     Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
@@ -172,6 +187,9 @@ public class AML_BOTview extends JFrame {
         setLocationRelativeTo(null);
         setVisible(true);
         setResizable(false);
+        invalidate();
+        validate();
+        repaint();
         // setDefaultLookAndFeelDecorated(true);
 
     }
@@ -204,7 +222,7 @@ public class AML_BOTview extends JFrame {
         tablePane.addTab("Monitor", null, panelMonitor);
         tablePane.addTab("Báo cáo", null, panelResult);
         tablePane.addTab("Thiết lập", null, panelEstablish);
-        tablePane.setSelectedIndex(tablePane.getTabCount() - 2);
+        tablePane.setSelectedIndex(tablePane.getTabCount() - 3);
 
         return tablePane;
     }
@@ -250,7 +268,6 @@ public class AML_BOTview extends JFrame {
 
             }
         });
-
 
         JButton btView = createButton("Hiển thị báo cáo");
 
@@ -370,7 +387,9 @@ public class AML_BOTview extends JFrame {
         panelMonitor.setBorder(new TitledBorder(new EtchedBorder(),
                 "Công việc đang thực hiện"));
 
-        JTextArea display = new JTextArea(16, 58);
+        display = new JTextArea(16, 58);
+        ReadFromFile2 rf = new ReadFromFile2();
+
         display.setEditable(false); // set textArea non-editable
         JScrollPane scroll = new JScrollPane(display);
         scroll.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
@@ -432,9 +451,11 @@ public class AML_BOTview extends JFrame {
         JButton btSaveSetting = new JButton("Lưu cấu hình");
         JButton btStart = new JButton("START");
         JButton btStop = new JButton("STOP");
+        JLabel noteStatus = new JLabel();
         btSaveSetting.setEnabled(false);
         btStart.setEnabled(false);
         btStop.setEnabled(false);
+        noteStatus.setVisible(false);
         // ======== panel Setting=========================
         JPanel panelSetting = new JPanel();
         GridBagConstraints cSetting = new GridBagConstraints();
@@ -536,7 +557,7 @@ public class AML_BOTview extends JFrame {
         cIntervalSimple.fill = GridBagConstraints.HORIZONTAL;
         positionInPanel(cIntervalSimple, 0, 1);
         cIntervalSimple.anchor = GridBagConstraints.FIRST_LINE_START;
-        cIntervalSimple.insets = new Insets(10, 5, 10, 10);
+        cIntervalSimple.insets = new Insets(-10, 5, 10, 10);
         panelIntervalSimple.add(r2, cIntervalSimple);
 
         // =======Start Time=====================
@@ -570,7 +591,7 @@ public class AML_BOTview extends JFrame {
         dateTimePickerStart = new DateTimePicker(datePickerSettingsStart,
                 timePickerSettingsStart);
 
-        datePickerSettingsStart.setFormatForDatesCommonEra("yyyy-MM-dd");
+        datePickerSettingsStart.setFormatForDatesCommonEra("dd-MM-yyyy");
         /*
          * datePickerSettingsStart.setDateRangeLimits(today.minusDays(0),
          * today.plusDays(3000));
@@ -587,7 +608,6 @@ public class AML_BOTview extends JFrame {
                             textFieldRecur.setEnabled(false);
                             setRadioButtonStatus(r1, r2, r3, r4, true);
                             textIntervalPeriod.setEnabled(true);
-
                         } else {
                             textFieldRecur.setEnabled(false);
                             setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
@@ -628,9 +648,9 @@ public class AML_BOTview extends JFrame {
                 .createFormatterFromPatternString("HH:mm",
                         timeSettingsStop.getLocale()));
 
-        DateTimePicker dateTimePickerStop = new DateTimePicker(
-                dateSettingsStopDatePicker, timeSettingsStop);
-        dateSettingsStopDatePicker.setFormatForDatesCommonEra("yyyy-MM-dd");
+        dateTimePickerStop = new DateTimePicker(dateSettingsStopDatePicker,
+                timeSettingsStop);
+        dateSettingsStopDatePicker.setFormatForDatesCommonEra("dd-MM-yyyy");
         dateTimePickerStop.setEnabled(false);
         dateTimePickerStart
                 .addDateTimeChangeListener(new DateTimeChangeListener() {
@@ -639,6 +659,8 @@ public class AML_BOTview extends JFrame {
                     public void dateOrTimeChanged(DateTimeChangeEvent arg0) {
                         if (dateTimePickerStart.getDatePicker().getDate() != null) {
                             dateTimePickerStop.setEnabled(true);
+                            noteStatus.setVisible(false);
+
                         }
 
                     }
@@ -651,6 +673,17 @@ public class AML_BOTview extends JFrame {
                                 cbTuesday, cbWednesday, cbThursday, cbFriday,
                                 cbSaturday, r2, r3, r4, dateTimePickerStart,
                                 dateTimePickerStop);
+                        noteStatus.setVisible(false);
+
+                        try {
+                            noteStatusAction(btStart, btStop, noteStatus,
+                                    dateTimePickerStop.getDatePicker()
+                                            .getDate());
+                        } catch (Exception e) {
+                            // TODO Auto-generated catch block
+                            e.printStackTrace();
+                        }
+
                     }
 
                 });
@@ -705,7 +738,7 @@ public class AML_BOTview extends JFrame {
 
         JLabel intervalUnitTime = createLabel("phút");
         intervalUnitTime.setFont(new Font("TimesRoman", Font.CENTER_BASELINE,
-                16));
+                13));
         cInterval.fill = GridBagConstraints.CENTER;
         taskControlPanelPosition(cInterval, 0, 0);
         startTimePanelPosition(cInterval, 0, 2);
@@ -950,85 +983,67 @@ public class AML_BOTview extends JFrame {
         // space
         cSaveSetting.insets = new Insets(5, 10, 10, 10);
         panelSaveSetting.add(textSaveFolder, cSaveSetting);
-//         loadFileAndReturnElement();
+
         // if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
         System.out
                 .println("==================================Loading last status=========================================");
 
-        r1.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(0)));
-        r2.setSelected(Boolean.parseBoolean(loadFileAndReturnElement().get(1)));
+        File checkLoading = new File(saveEstablishStatus);
+        if (checkLoading.exists()) {
+            if (loadFileAndReturnElement().size() != 0
+                    && loadFileAndReturnElement().size() == 15) {
+                String test = loadFileAndReturnElement().get(7);
+                loadingRecentStatus(
+                        cbMonday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(9)),
+                        cbSunday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(8)),
+                        cbTuesday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(10)),
+                        cbWednesday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(11)),
+                        cbThursday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(12)),
+                        cbFriday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(13)),
+                        cbSaturday,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(14)),
+                        textIntervalPeriod,
+                        loadFileAndReturnElement().get(7),
+                        r1,
+                        Boolean.parseBoolean(loadFileAndReturnElement().get(0)),
+                        r2, Boolean.parseBoolean(loadFileAndReturnElement()
+                                .get(1)), dateTimePickerStart, LocalDate
+                                .parse((loadFileAndReturnElement().get(2))),
+                        loadFileAndReturnElement().get(3), dateTimePickerStop,
+                        LocalDate.parse((loadFileAndReturnElement().get(4))),
+                        loadFileAndReturnElement().get(5), textSaveFolder,
+                        loadFileAndReturnElement().get(6));
 
-        if (r1.isSelected()) {
-            period = 1;
-            textIntervalPeriod.setEnabled(false);
-            System.out.println(period);
-        } else if (r2.isSelected()) {
-            if (textIntervalPeriod.getValue().toString().equals("0")) {
-                period = 24 * 60;
+                noteStatusAction(btStart, btStop, noteStatus,
+                        LocalDate.parse((loadFileAndReturnElement().get(4))));
             } else {
-                period = Integer.parseInt(textIntervalPeriod.getValue()
-                        .toString());
+                DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+                loadingRecentStatus(cbMonday, false, cbSunday, false,
+                        cbTuesday, false, cbWednesday, false, cbThursday,
+                        false, cbFriday, false, cbSaturday, false,
+                        textIntervalPeriod, "-1", r1, false, r2, false,
+                        dateTimePickerStart, LocalDate.now(), LocalTime.now()
+                                .format(dtf).toString(), dateTimePickerStop,
+                        LocalDate.now(),
+                        LocalTime.now().format(dtf).toString(), textSaveFolder,
+                        "");
             }
-        }
-
-        dateTimePickerStart.datePicker.setDate(LocalDate
-                .parse((loadFileAndReturnElement().get(2))));
-        dateTimePickerStart.timePicker.setText((loadFileAndReturnElement()
-                .get(3)).toString());
-        dateTimePickerStop.datePicker.setDate(LocalDate
-                .parse((loadFileAndReturnElement().get(4))));
-        dateTimePickerStop.timePicker.setText((loadFileAndReturnElement()
-                .get(5)).toString());
-
-        textSaveFolder.setText(loadFileAndReturnElement().get(6));
-        if (Integer.parseInt(loadFileAndReturnElement().get(7)) == -1) {
-            textIntervalPeriod.setEnabled(false);
         } else {
-            textIntervalPeriod.setValue(Integer
-                    .parseInt(loadFileAndReturnElement().get(7)));
+            DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
+            loadingRecentStatus(cbMonday, false, cbSunday, false, cbTuesday,
+                    false, cbWednesday, false, cbThursday, false, cbFriday,
+                    false, cbSaturday, false, textIntervalPeriod, "-1", r1,
+                    false, r2, false, dateTimePickerStart, LocalDate.now(),
+                    LocalTime.now().format(dtf).toString(), dateTimePickerStop,
+                    LocalDate.now(), LocalTime.now().format(dtf).toString(),
+                    textSaveFolder, "");
         }
-
-        cbSunday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(8)));
-        cbMonday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(9)));
-        cbTuesday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(10)));
-        cbWednesday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(11)));
-        cbThursday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(12)));
-        cbFriday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(13)));
-        cbSaturday.setSelected(Boolean.parseBoolean(loadFileAndReturnElement()
-                .get(14)));
-
-        System.out
-                .println("==================================Loading last status DONE=========================================");
-
-        System.out.println("0. jrdOneTime " + r1.isSelected());
-        System.out.println("1. jrdDaily " + r2.isSelected());
-
-        System.out.println("2. StartDateStr "
-                + dateTimePickerStart.datePicker.toString());
-        System.out.println("3. StartTimeStr "
-                + dateTimePickerStart.timePicker.toString());
-        System.out.println("4. EndDateStr "
-                + dateTimePickerStop.datePicker.toString());
-        System.out.println("5. EndTimeStr "
-                + dateTimePickerStop.timePicker.toString());
-        System.out.println("6. saveFile " + textSaveFolder.getText());
-        System.out.println("7. intevalPeriod " + textIntervalPeriod.getValue());
-        System.out.println("8. jcbSundayStatus " + cbSunday.isSelected());
-        System.out.println("9. jcbMondayStatus " + cbMonday.isSelected());
-        System.out.println("10. jcbTuesdayStatus " + cbTuesday.isSelected());
-        System.out
-                .println("11. jcbWednesdayStatus " + cbWednesday.isSelected());
-        System.out.println("12. jcbThurdayStatus " + cbThursday.isSelected());
-        System.out.println("13. jcbFridayStatus " + cbFriday.isSelected());
-        System.out.println("14. jcbSaturStatus " + cbSaturday.isSelected());
-        System.out
-                .println("==================================Done=========================================");
 
         btSaveSetting
                 .addActionListener(e -> {
@@ -1108,7 +1123,7 @@ public class AML_BOTview extends JFrame {
 
         btStart.addActionListener(e -> {
 
-            actionBtnStart(timer, textIntervalPeriod.getValue().toString(),
+            actionBtStart(textIntervalPeriod.getValue().toString(),
                     dateTimePickerStart, dateTimePickerStop, textSaveFolder,
                     dateStartArr);
 
@@ -1135,22 +1150,24 @@ public class AML_BOTview extends JFrame {
         ;
         cTaskControl.fill = GridBagConstraints.LINE_START;
         taskControlPanelPosition(cTaskControl, 0, 3);
-        // startTimePanelPosition(cTaskControl, 0, 3);
         cTaskControl.anchor = GridBagConstraints.LINE_START; // bottom of
         // space
         cTaskControl.insets = new Insets(5, 20, 0, 50);
         panelTaskControl.add(btStop, cTaskControl);
 
-        // ========== add Panel Save folder to panel
-        // Save Setting=======================
-        // add Panel Setting to panel
-        // cSaveSetting.fill = GridBagConstraints.HORIZONTAL;
-        // positionInPanel(cSaveSetting, 0, 4);
-        // taskControlPanelPosition(cSaveSetting, 0, 0);
-        // cSaveSetting.insets = new Insets(20, 0, 0, 0);
-        // panelSaveSetting.add(panelTaskControl, cSaveSetting);
+        noteStatus.setForeground(Color.RED);
+        cTaskControl.fill = GridBagConstraints.LINE_START;
+        // taskControlPanelPosition(cTaskControl, 0, 0);
+        cTaskControl.gridy = 1;
+        cTaskControl.gridx = 0;
+        cTaskControl.ipadx = 0;
+        cTaskControl.ipady = 0;
+        cTaskControl.gridwidth = 3;
+        cTaskControl.anchor = GridBagConstraints.LINE_START; // bottom of
+        // space
+        cTaskControl.insets = new Insets(20, -120, 10, 10);
+        panelTaskControl.add(noteStatus, cTaskControl);
 
-        // ========== add Panel Setting to panel
         // Establish=======================
         // add Panel Setting to panel
         cEstablish.fill = GridBagConstraints.HORIZONTAL;
@@ -1181,17 +1198,169 @@ public class AML_BOTview extends JFrame {
         return panelEstablish;
     }
 
+    private void noteStatusAction(JButton btStart, JButton btStop,
+                                  JLabel noteStatus, LocalDate dateMaking) throws Exception {
+        String formattedDate = today.format(DateTimeFormatter
+                .ofPattern("dd-MM-yyyy"));
+        if (dateMaking.isBefore(LocalDate.now())) {
+            noteStatus.setVisible(true);
+            noteStatus
+                    .setText("*Chú ý: Ngày kết thúc được nạp đang trước ngày hôm nay: "
+                            + "\" " + formattedDate + " \"");
+            btStart.setEnabled(false);
+            btStop.setEnabled(false);
+        } else {
+            noteStatus.setVisible(false);
+            btStart.setEnabled(true);
+            btStop.setEnabled(true);
+        }
+    }
+
+    private void loadingRecentStatus(JCheckBox cbMonday,
+                                     Boolean cbMondayStatus, JCheckBox cbSunday, Boolean cbSundayStatus,
+                                     JCheckBox cbTuesday, Boolean cbTuesdayStatus,
+                                     JCheckBox cbWednesday, Boolean cbWednesdayStatus,
+                                     JCheckBox cbThursday, Boolean cbThursdayStatus, JCheckBox cbFriday,
+                                     Boolean cbFridayStatus, JCheckBox cbSaturday,
+                                     Boolean cbSaturdayStatus, JSpinner textIntervalPeriod,
+                                     String textIntervalPeriodValue, JRadioButton r1, Boolean r1Status,
+                                     JRadioButton r2, Boolean r2Status, DateTimePicker dateTimeStart,
+                                     LocalDate dateStart, String timeStart,
+                                     DateTimePicker dateTimePickerStop, LocalDate dateStop,
+                                     String timeStop, JTextArea textSaveFolder, String savePath)
+            throws Exception {
+        r1.setSelected(r1Status);
+        r2.setSelected(r2Status);
+
+        r1.setEnabled(r1Status);
+        r2.setEnabled(r2Status);
+
+        textIntervalPeriod.setValue(Integer.parseInt(textIntervalPeriodValue));
+
+        if (r1.isSelected()) {
+            period = 1;
+            textIntervalPeriod.setEnabled(false);
+            System.out.println(period);
+        } else if (r2.isSelected()) {
+            if (textIntervalPeriod.getValue().toString().equals("0")) {
+                period = 24 * 60;
+            } else {
+                period = Integer.parseInt(textIntervalPeriodValue);
+            }
+        }
+
+        dateTimeStart.datePicker.setDate(dateStart);
+        dateTimeStart.timePicker.setText(timeStart);
+        dateTimePickerStop.datePicker.setDate(dateStop);
+        dateTimePickerStop.timePicker.setText(timeStop);
+
+        textSaveFolder.setText(savePath);
+
+        cbSunday.setSelected(cbSundayStatus);
+        cbMonday.setSelected(cbMondayStatus);
+        cbTuesday.setSelected(cbTuesdayStatus);
+        cbWednesday.setSelected(cbWednesdayStatus);
+        cbThursday.setSelected(cbThursdayStatus);
+        cbFriday.setSelected(cbFridayStatus);
+        cbSaturday.setSelected(cbSaturdayStatus);
+
+        cbSunday.setEnabled(cbSundayStatus);
+        cbMonday.setEnabled(cbMondayStatus);
+        cbTuesday.setEnabled(cbTuesdayStatus);
+        cbWednesday.setEnabled(cbWednesdayStatus);
+        cbThursday.setEnabled(cbThursdayStatus);
+        cbFriday.setEnabled(cbFridayStatus);
+        cbSaturday.setEnabled(cbSaturdayStatus);
+
+        System.out
+                .println("==================================Loading last status DONE=========================================");
+
+        System.out.println("0. jrdOneTime " + r1.isSelected());
+        System.out.println("1. jrdDaily " + r2.isSelected());
+
+        System.out.println("2. StartDateStr "
+                + dateTimePickerStart.datePicker.toString());
+        System.out.println("3. StartTimeStr "
+                + dateTimePickerStart.timePicker.toString());
+        System.out.println("4. EndDateStr "
+                + dateTimePickerStop.datePicker.toString());
+        System.out.println("5. EndTimeStr "
+                + dateTimePickerStop.timePicker.toString());
+        System.out.println("6. saveFile " + textSaveFolder.getText());
+        System.out.println("7. intevalPeriod " + textIntervalPeriod.getValue());
+        System.out.println("8. jcbSundayStatus " + cbSunday.isSelected());
+        System.out.println("9. jcbMondayStatus " + cbMonday.isSelected());
+        System.out.println("10. jcbTuesdayStatus " + cbTuesday.isSelected());
+        System.out
+                .println("11. jcbWednesdayStatus " + cbWednesday.isSelected());
+        System.out.println("12. jcbThurdayStatus " + cbThursday.isSelected());
+        System.out.println("13. jcbFridayStatus " + cbFriday.isSelected());
+        System.out.println("14. jcbSaturStatus " + cbSaturday.isSelected());
+        System.out
+                .println("==================================Done=========================================");
+    }
+
     private void cBDayOfWeekStatus(JCheckBox cbox, boolean cbStatus) {
-        System.out.println(cbox.getText().toUpperCase() + ": " + cbStatus);
+        // System.out.println(cbox.getText().toUpperCase() + ": " + cbStatus);
         // Create new dayInfo object and add to dayInfoArrayList
-        String dayOfWeek = cbox.getText();
-        // ArrayList<DayInfo> dayInfoArrayList = new ArrayList<DayInfo>();
-        // dayInfoArrayList.add(new DayInfo(cbStatus, dayOfWeek));
+        String dayOfWeek = "";
+        switch (cbox.getText()) {
+            case "Thứ hai":
+                dayOfWeek = "MONDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Thứ ba":
+                dayOfWeek = "TUESDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Thứ tư":
+                dayOfWeek = "WEDNESDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Thứ năm":
+                dayOfWeek = "THURSDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Thứ sáu":
+                dayOfWeek = "FRIDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Thứ bảy":
+                dayOfWeek = "SATURDAY";
+                break;
+        }
+        switch (cbox.getText()) {
+            case "Chủ nhật":
+                dayOfWeek = "SUNDAY";
+                break;
+        }
+
         String dateStr = dateTimePickerStart.getDatePicker().getDate()
                 .getDayOfWeek().toString();
         if (cbStatus == true) {
+            Calendar calEnd = calendarFromPickers(
+                    dateTimePickerStop.getDatePicker(),
+                    dateTimePickerStop.getTimePicker());
+            // Calendar calStart = Calendar.getInstance();
+            Calendar calStart = calendarFromPickers(
+                    dateTimePickerStart.getDatePicker(),
+                    dateTimePickerStart.getTimePicker());
             if (dayOfWeek.equals(dateStr)) {
                 dateStartArr.add(dateTimePickerStart.getDatePicker().getDate());
+            } else {
+                List<LocalDate> lst = getDateTimeFromDayOfWeek(calStart,
+                        calEnd, dayOfWeek, dateTimePickerStart.getTimePicker()
+                                .getTime().getHour(), dateTimePickerStart
+                                .getTimePicker().getTime().getMinute());
+                for (int i = 0; i < lst.size(); i++) {
+                    System.out.println(lst.get(i));
+                    dateStartArr.add(lst.get(i));
+                }
             }
         }
     }
@@ -1303,7 +1472,7 @@ public class AML_BOTview extends JFrame {
         }
     }
 
-    private String defaultPathString() {
+    private static String defaultPathString() {
         Preferences pref = Preferences.userRoot();
         return pref.get("DEFAULT_PATH", "");
     }
@@ -1441,27 +1610,63 @@ public class AML_BOTview extends JFrame {
         cbSaturday.setEnabled(status);
     }
 
-    private void actionBtnStart(SingleTaskTimer timer,
-                                String textIntervalPeriod, DateTimePicker dateTimePickerStart,
-                                DateTimePicker dateTimePickerStop, JTextArea txtSaveFolder,
-                                ArrayList<LocalDate> dateStartArr) {
+    private void actionBtStart(String textIntervalPeriod,
+                               DateTimePicker dateTimePickerStart,
+                               DateTimePicker dateTimePickerStop, JTextArea txtSaveFolder,
+                               ArrayList<LocalDate> dateStartArr) {
         Calendar calEnd = calendarFromPickers(
                 dateTimePickerStop.getDatePicker(),
                 dateTimePickerStop.getTimePicker());
+        // Calendar calStart = Calendar.getInstance();
         Calendar calStart = calendarFromPickers(
                 dateTimePickerStart.getDatePicker(),
                 dateTimePickerStart.getTimePicker());
+        // RUN BY DAY OF WEEK
         if (dateStartArr.size() > 0) {
             for (LocalDate date : dateStartArr) {
-                calStart = Calendar.getInstance();
                 calStart.set(date.getYear(), date.getMonthValue() - 1,
                         date.getDayOfMonth());
-                System.out.println(calStart.toString());
-                downloadFileByDayOfWeek(timer, textIntervalPeriod,
-                        txtSaveFolder, calEnd, calStart);
+                System.out.println(calStart.getTime().toString());
+                /*
+                 * if
+                 * (date.getDayOfWeek().equals(calStart.get(Calendar.DAY_OF_WEEK
+                 * ))) { timer2 = new Timer(); timer2.schedule(new TimerTask() {
+                 *
+                 * @Override public void run() { downloadFile(txtSaveFolder);
+                 * Date dateNow = new Date(); if
+                 * (dateNow.compareTo(calEnd.getTime()) > 0) {
+                 * System.out.println("Stop!"); timer2.cancel(); }
+                 *
+                 * } }, calStart.getTime(), TimeUnit.MILLISECONDS.convert(
+                 * period, TimeUnit.MINUTES)); timer2.cancel(); } else {
+                 */
+                if (!textIntervalPeriod.equals("0")) {
+                    period = Integer.parseInt(textIntervalPeriod);
+                }
+                timer2 = new Timer();
+                timer2.schedule(new TimerTask() {
+
+                                    @Override
+                                    public void run() {
+                                        downloadFile(txtSaveFolder);
+                                        Date dateNow = new Date();
+                                        if (dateNow.compareTo(calEnd.getTime()) > 0) {
+                                            System.out.println("Stop!");
+                                            timer2.cancel();
+                                        }
+
+                                    }
+                                }, calStart.getTime(),
+                        TimeUnit.MILLISECONDS.convert(period, TimeUnit.MINUTES));
+                if (LocalDateTime.now().compareTo(
+                        LocalDateTime.now().withHour(16).withMinute(58)) > 0) {
+                    System.out.println("Timer cancel");
+                    timer2.cancel();
+                }
+
             }
         } else {
-
+            // RUN DAILY 8:00 - 17:30
             if (!textIntervalPeriod.equals("0")) {
                 period = Integer.parseInt(textIntervalPeriod);
             }
@@ -1470,14 +1675,9 @@ public class AML_BOTview extends JFrame {
                 @Override
                 public void run() {
                     System.out.println("Running!");
-                    downloadFileDaily(txtSaveFolder);
+                    downloadFile(txtSaveFolder);
                     try {
-
-                        // String dateStrStop = "2019-05-23 14:47";
                         DateFormat df = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-                        // DateFormat formatter = new
-                        // SimpleDateFormat("E MMM dd HH:mm Z
-                        // yyyy");
                         Date dateNow = new Date();
                         dateNow.setSeconds(00);
                         Date datePause = new Date();
@@ -1530,9 +1730,19 @@ public class AML_BOTview extends JFrame {
             System.out.println("period: "
                     + TimeUnit.MILLISECONDS.convert(period, TimeUnit.MINUTES));
         }
+        loadMonitor(printLogOut);
     }
 
-    private void downloadFileDaily(JTextArea txtSaveFolder) {
+    public static void loadMonitor(String logs) {
+        SwingUtilities.invokeLater(new Runnable() {
+            @Override
+            public void run() {
+                display.append(logs);
+            }
+        });
+    }
+
+    private void downloadFile(JTextArea txtSaveFolder) {
         downloadFolder = txtSaveFolder.getText();
         File dir = new File(downloadFolder);
         if (!dir.exists()) {
@@ -1542,26 +1752,25 @@ public class AML_BOTview extends JFrame {
         startTask.run();
     }
 
-    private void downloadFileByDayOfWeek(SingleTaskTimer timer,
-                                         String textIntervalPeriod, JTextArea txtSaveFolder,
-                                         Calendar calEnd, Calendar calStart) {
-        if (!textIntervalPeriod.equals("0")) {
-            period = Integer.parseInt(textIntervalPeriod);
-        }
-        System.out.println(period);
-        long timePeriod = TimeUnit.MILLISECONDS.convert(period,
-                TimeUnit.MINUTES);
-        // add and validate Download folder
-        downloadFolder = txtSaveFolder.getText();
-        File dir = new File(downloadFolder);
-        if (!dir.exists()) {
-            downloadFolder = defaultPathString();
-        }
-        System.out.println(calEnd.getTime());
-
-        timer.setTask(new StartTask(downloadFolder));
-        timer.schedule(calStart.getTime(), calEnd.getTime(), timePeriod);
-    }
+    /*
+     * private void downloadFileByDayOfWeek(String textIntervalPeriod, JTextArea
+     * txtSaveFolder, Calendar calEnd, Calendar calStart) {
+     *
+     * //long timePeriod = TimeUnit.MILLISECONDS.convert(period, //
+     * TimeUnit.MINUTES); // add and validate Download folder downloadFolder =
+     * txtSaveFolder.getText(); File dir = new File(downloadFolder); if
+     * (!dir.exists()) { downloadFolder = defaultPathString(); }
+     *
+     * System.out.println(calStart.getTime());
+     * System.out.println(calEnd.getTime());
+     *
+     * StartTask startTask = new StartTask(downloadFolder); Timer timer = new
+     * Timer(); timer.schedule(new TimerTask() {
+     *
+     * @Override public void run() { startTask.run(); } }, calStart.getTime(),
+     * timePeriod); //timer.schedule(calStart.getTime(), calEnd.getTime(),
+     * timePeriod); }
+     */
 
     private void saveRecentEstablishTabStatus(Boolean oneTime, Boolean daily,
                                               Boolean weekly, Boolean monthly, String startDateStr2,
@@ -1584,25 +1793,16 @@ public class AML_BOTview extends JFrame {
         // double backquote is to avoid compiler interpret words
         // like \test as \t (ie. as a escape sequence)
         ArrayList<String> loadingStatus = new ArrayList<String>();
-        File file = new File("SaveEstablishText/saveEstablish.txt");
+        File file = new File("SaveEstablishLastStatus/saveEstablish.txt");
 
         BufferedReader br = new BufferedReader(new FileReader(file));
-
         String st;
-
-        /*
-         * System.out
-         * .println("=====================================================");
-         */
-        // System.out.println("String has split by \"/@" ");
         int i = 0;
         while ((st = br.readLine()) != null) {
             String s1 = st;
             String[] words = s1.split("@");
             for (String w : words) {
                 loadingStatus.add(w);
-                // System.out.println(i + ". " + w);
-                // i++;
             }
         }
         return loadingStatus;
@@ -1623,28 +1823,74 @@ public class AML_BOTview extends JFrame {
         return listString;
     }
 
-    private LinkedList<String> converseLogToWrite(
-            LinkedList<String> logLinkedList) {
-        LinkedList<String> linkedExp = new LinkedList<String>();
-        ArrayList<String> listRaw = new ArrayList<String>(logLinkedList);
-        ArrayList<String> listExp = new ArrayList<String>();
+    private List<LocalDate> getDateTimeFromDayOfWeek(Calendar cStart,
+                                                     Calendar cEnd, String dayOfWeekInput, int hourInput, int minuteInput) {
+        List<LocalDate> lcal = new ArrayList<LocalDate>();
 
-        int i = 0;
-        while (i <= listRaw.size() - 6) {
-            String valueId = listRaw.get(i);
-            String valueKind = listRaw.get(i + 1);
-            String valueCreatingTime = listRaw.get(i + 2);
-            String valueFileName = listRaw.get(i + 3);
-            String valueStatus = listRaw.get(i + 4);
-            String valueFilePath = listRaw.get(i + 5);
-            String valueNote = listRaw.get(i + 6);
-            listExp.add(valueId + "\t" + valueKind + "\t" + valueFileName
-                    + "\t" + valueFileName + "\t" + valueStatus + "\t"
-                    + valueFilePath + "\t" + valueNote);
-            i = i + 7;
+        int count = 0;
+        int dayOfWeek = 0;
+        // DayOfWeek.valueOf(dayOfWeekInput).getValue() + 1;
+        // int dayOfWeek = Calendar.SUNDAY;
+        switch (dayOfWeekInput) {
+            case "SUNDAY":
+                dayOfWeek = 1;
+                break;
+            case "MONDAY":
+                dayOfWeek = 2;
+                break;
+            case "TUESDAY":
+                dayOfWeek = 3;
+                break;
+            case "WEDNESDAY":
+                dayOfWeek = 4;
+                break;
+            case "THURSDAY":
+                dayOfWeek = 5;
+                break;
+            case "FRIDAY":
+                dayOfWeek = 6;
+                break;
+            case "SATURDAY":
+                dayOfWeek = 7;
+                break;
         }
-        linkedExp = new LinkedList<String>(listExp);
-        return linkedExp;
+        while (cEnd.compareTo(cStart) > 0) {
+            if (cStart.get(Calendar.DAY_OF_WEEK) == dayOfWeek) {
+                count = count + 1;
+
+                int hour = hourInput; // 10 AM
+                int minute = minuteInput;
+
+                Calendar cal = cStart;
+                /*
+                 * Calendar.getInstance(); // Today, now if
+                 * (cal.get(Calendar.DAY_OF_WEEK) != dayOfWeek) {
+                 * cal.add(Calendar.DAY_OF_MONTH, (dayOfWeek + 7 -
+                 * cal.get(Calendar.DAY_OF_WEEK)) % 7); } else { int minOfDay =
+                 * cal.get(Calendar.HOUR_OF_DAY) * 60 +
+                 * cal.get(Calendar.MINUTE); if (minOfDay >= hour * 60 + minute)
+                 * cal.add(Calendar.DAY_OF_MONTH, 7); // Bump to next week }
+                 */
+                cal.set(Calendar.HOUR_OF_DAY, hour);
+                cal.set(Calendar.MINUTE, minute);
+                cal.set(Calendar.SECOND, 0);
+                cal.set(Calendar.MILLISECOND, 0);
+                LocalDate lcd = LocalDateTime.ofInstant(cal.toInstant(),
+                        cal.getTimeZone().toZoneId()).toLocalDate();
+                lcal.add(lcd);
+                System.out.println(cal.getTime());
+            }
+            cStart.add(Calendar.DATE, 1);
+        }
+
+        /*
+         * System.out.println(cal.getTime()); TimeZone tz = cal.getTimeZone();
+         * ZoneId zid = tz == null ? ZoneId.systemDefault() : tz.toZoneId();
+         *
+         * LocalDateTime dateTimeOutPut =
+         * LocalDateTime.ofInstant(cal.toInstant(), zid);
+         */
+        return lcal;
     }
 
 }
