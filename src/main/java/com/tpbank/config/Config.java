@@ -1,9 +1,9 @@
 package com.tpbank.config;
 
-
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.util.Iterator;
+import java.util.Properties;
 
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -13,11 +13,12 @@ import org.json.simple.parser.JSONParser;
 public class Config {
 
 	private static JSONArray jsonArrayConfig = null;
+	private static Properties properties = null;
 
 	public static void main(String[] args) {
 
 //		loadConfig();
-
+//
 //		JSONObject flow = getFlowById("INDIVIDUAL"); // INDIVIDUAL |
 //														// ORGANISATION
 //
@@ -30,6 +31,7 @@ public class Config {
 	}
 	
 	static {
+		loadProperties();
 		loadConfig();
 	}
 
@@ -38,7 +40,8 @@ public class Config {
 
 		try {
 
-			InputStream is = Config.class.getClassLoader().getResourceAsStream("config.json");
+			InputStream is = Config.class.getClassLoader().getResourceAsStream(
+					"flow.json");
 			Object obj = parser.parse(new InputStreamReader(is));
 
 			jsonArrayConfig = (JSONArray) obj;
@@ -48,8 +51,28 @@ public class Config {
 		}
 	}
 	
+	public static void loadProperties() {
+		try {
+
+			InputStream is = Config.class.getClassLoader().getResourceAsStream(
+					"config.properties");
+			properties.load(is);
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	
 	public static JSONArray getJsonConfig(){
 		return jsonArrayConfig;
+	}
+	
+	public static String getParam(String param){
+		if(properties == null)
+			return null;
+		
+		return properties.getProperty(param);
+		
 	}
 
 }

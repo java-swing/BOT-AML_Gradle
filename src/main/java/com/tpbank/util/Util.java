@@ -1,23 +1,23 @@
-package com.tpbank.botaml.util;
+package com.tpbank.util;
 
 import java.util.Iterator;
 
+import com.tpbank.config.Config;
+import com.tpbank.job.ScreeningJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
 
-import com.tpbank.config.Config;
-
-public class BotUtil {
+public class Util {
 
 	public static void main(String[] args) {
 
 	}
 
-	@SuppressWarnings("unchecked")
 	public static JSONObject getFlowById(String flow) {
 		if (flow == null)
 			return null;
 
+		@SuppressWarnings("unchecked")
 		Iterator<Object> iterator = Config.getJsonConfig().iterator();
 
 		JSONObject jsonObject = null;
@@ -40,8 +40,9 @@ public class BotUtil {
 		JSONArray arr = null;
 		try {
 			arr = (JSONArray) flow.get("steps");
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
+		} catch (Exception e) {
+			System.out.println(e.toString());
+			ScreeningJob.displayAndWriteLogError(e);
 		}
 		return arr;
 	}
@@ -75,8 +76,9 @@ public class BotUtil {
 		JSONArray arr = null;
 		try {
 			arr = (JSONArray) step.get("stepElements");
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
+		} catch (Exception e) {
+			System.out.println(e.toString());
+			ScreeningJob.displayAndWriteLogError(e);
 		}
 		return arr;
 	}
@@ -89,8 +91,9 @@ public class BotUtil {
 		String val = null;
 		try {
 			val = (String) obj.get(key);
-		} catch (Exception ex) {
-			System.out.println(ex.toString());
+		} catch (Exception e) {
+			System.out.println(e.toString());
+			ScreeningJob.displayAndWriteLogError(e);
 		}
 		return val;
 
