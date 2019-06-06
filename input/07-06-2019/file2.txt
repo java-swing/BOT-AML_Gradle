@@ -1,0 +1,2 @@
+NOKIA|individual
+APPLE|organisation
