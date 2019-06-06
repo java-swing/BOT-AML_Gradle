@@ -1,4 +1,4 @@
-package com.tpbank.ui;
+package com.tpb.bot.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -11,14 +11,13 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.sql.SQLException;
-import java.text.SimpleDateFormat;
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Iterator;
-import java.util.LinkedList;
+import java.util.List;
 import java.util.Observable;
 import java.util.Observer;
 import java.util.Timer;
@@ -47,15 +46,7 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.DefaultTableModel;
-import javax.swing.table.TableColumnModel;
-import javax.swing.table.TableModel;
-
-import com.tpbank.constant.Constant;
-import com.tpbank.job.ScreeningJob;
-import com.tpbank.util.*;
 import org.apache.log4j.Logger;
-
-
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DatePickerSettings;
@@ -66,7 +57,14 @@ import com.github.lgooddatepicker.optionalusertools.DateTimeChangeListener;
 import com.github.lgooddatepicker.optionalusertools.PickerUtilities;
 import com.github.lgooddatepicker.zinternaltools.DateChangeEvent;
 import com.github.lgooddatepicker.zinternaltools.DateTimeChangeEvent;
-
+import com.tpb.bot.constant.Constant;
+import com.tpb.bot.job.ScreeningJob;
+import com.tpb.bot.util.ReadAndToExportLog;
+import com.tpb.bot.util.CreatingGuiJob;
+import com.tpb.bot.util.LogFile;
+import com.tpb.bot.util.LogFileDownload;
+import com.tpb.bot.util.WriteLogToTable;
+import com.tpb.bot.util.FunctionFactory;
 
 public class BotUI extends JFrame implements Observer {
 
@@ -74,13 +72,7 @@ public class BotUI extends JFrame implements Observer {
 
 	public static final Logger logger = Logger.getLogger(BotUI.class);
 
-	private static final SimpleDateFormat dtf = new SimpleDateFormat(
-			Constant.DATE_TIME_FORMAT);
-
-	private static final SimpleDateFormat df = new SimpleDateFormat(
-			Constant.DATE_FORMAT_DDMMYYYY);
-
-	 public static String downloadFolder =	 functionFactory.defaultPathString();
+	public static String downloadFolder = Constant.defaultPathString();
 
 	public static DateTimePicker dateTimePickerStart = new DateTimePicker();
 	public static DateTimePicker dateTimePickerStop = new DateTimePicker();
@@ -114,10 +106,6 @@ public class BotUI extends JFrame implements Observer {
 	Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 
 	// QueryJobToExportLog queryJob = new QueryJobToExportLog();
-
-	private TableColumnModel columns;
-
-	private TableModel dataFile;
 
 	private JTable table;
 	DefaultTableModel model;
@@ -172,7 +160,7 @@ public class BotUI extends JFrame implements Observer {
 		tablePane.addTab("Monitor", null, panelMonitor);
 		tablePane.addTab("Báo cáo", null, panelResult);
 		tablePane.addTab("Thiết lập", null, panelEstablish);
-		tablePane.setSelectedIndex(0);
+		tablePane.setSelectedIndex(2);
 
 		return tablePane;
 	}
@@ -194,6 +182,7 @@ public class BotUI extends JFrame implements Observer {
 		return panelMonitor;
 	}
 
+	@SuppressWarnings({ "serial", "unchecked" })
 	private JPanel createPanelReport() throws ClassNotFoundException,
 			SQLException {
 		JPanel panelResult = new JPanel();
@@ -209,7 +198,12 @@ public class BotUI extends JFrame implements Observer {
 		cols.addElement("Trạng thái");
 		cols.addElement("Đường dẫn");
 		cols.addElement("Ghi chú");
-		model = new DefaultTableModel(null, cols);
+		model = new DefaultTableModel(null, cols) {
+			@Override
+			public boolean isCellEditable(int row, int column) {
+				return false;
+			}
+		};
 		model.fireTableDataChanged();
 
 		table = new JTable(model);
@@ -257,7 +251,7 @@ public class BotUI extends JFrame implements Observer {
 			@Override
 			public void dateChanged(DateChangeEvent arg0) {
 				dateSettingsEndDatePicker.setDateRangeLimits(today
-						.minusDays(functionFactory
+						.minusDays(FunctionFactory
 								.getDiffWithTodayByDay(jdStartDateRs)), today
 						.plusDays(3000));
 				jdEndDateRs.setEnabled(true);
@@ -269,11 +263,18 @@ public class BotUI extends JFrame implements Observer {
 
 		btView.addActionListener(e -> {
 			// btViewData = true;
-			QueryJobToExportLog queryJob = new QueryJobToExportLog(
+			ReadAndToExportLog queryJob = new ReadAndToExportLog(
 					jdStartDateRs, jdEndDateRs);
+			@SuppressWarnings("rawtypes")
 			Vector<Vector> listRowData = new Vector<>();
 			listRowData.removeAllElements();
-			listRowData = queryJob.getAllData();
+			try {
+				listRowData = queryJob.getAllData();
+			} catch (Exception e1) {
+				// TODO Auto-generated catch block
+				e1.printStackTrace();
+			}
+
 			int rowCount = model.getRowCount();
 			for (int i = rowCount - 1; i >= 0; i--) {
 				model.removeRow(i);
@@ -296,23 +297,29 @@ public class BotUI extends JFrame implements Observer {
 			String nameFile = ("Báo cáo từ ngày "
 					+ jdStartDateRs.getDate().format(dtf) + " đến ngày " + jdEndDateRs
 					.getDate().format(dtf));
-			QueryJobToExportLog queryJob = new QueryJobToExportLog(
+			ReadAndToExportLog queryJob = new ReadAndToExportLog(
 					jdStartDateRs, jdEndDateRs);
-			LinkedList<String> log;
+			
 			try {
-				log = queryJob.getQueryJobToExportLog();
-
-				Iterator<String> it = log.iterator();
+				List<LogFileDownload> log =  queryJob.getAllDataToPrintPDF();
+				
+				Iterator<LogFileDownload> it = log.iterator();
 				System.out.println("Print Log in Export file");
 				System.out
 						.println("===========================================");
 				while (it.hasNext()) {
-					String value = it.next();
-					System.out.println(value);
+					
+					LogFileDownload value = it.next();	
+					System.out.println("1. " + value.getType());
+					System.out.println("2. " + value.getDatefiledownload());
+					System.out.println("3. " + value.getName());
+					System.out.println("4. " + value.getStatus());
+					System.out.println("5. " + value.getFilepathfolder());
+					System.out.println("6. " + value.getNote());
 				}
 
-				WriteLogToTable createTableLog = new WriteLogToTable(
-						log, nameFile, jdStartDateRs, jdEndDateRs);
+				WriteLogToTable createTableLog = new WriteLogToTable(log,
+						nameFile, jdStartDateRs, jdEndDateRs);
 				createTableLog.drawTablePDF(log, nameFile);
 
 			} catch (Exception ex) {
@@ -410,7 +417,7 @@ public class BotUI extends JFrame implements Observer {
 		textIntervalPeriod.setBorder(null);
 		textFieldRecur.setEnabled(false);
 		textIntervalPeriod.setEnabled(false);
-		functionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
+		FunctionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday, cbTuesday,
 				cbWednesday, cbThursday, cbFriday, cbSaturday, false);
 
 		JPanel panelTaskControl = new JPanel();
@@ -458,7 +465,7 @@ public class BotUI extends JFrame implements Observer {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				textFieldRecur.setEnabled(false);
-				functionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday,
+				FunctionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday,
 						cbTuesday, cbWednesday, cbThursday, cbFriday,
 						cbSaturday, false);
 				textIntervalPeriod.setEnabled(false);
@@ -479,7 +486,7 @@ public class BotUI extends JFrame implements Observer {
 			@Override
 			public void actionPerformed(ActionEvent arg0) {
 				textFieldRecur.setEnabled(false);
-				functionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday,
+				FunctionFactory.setCBDayOfWeekStatus(cbMonday, cbSunday,
 						cbTuesday, cbWednesday, cbThursday, cbFriday,
 						cbSaturday, true);
 				dateTimePickerStop.setEnabled(true);
@@ -535,10 +542,7 @@ public class BotUI extends JFrame implements Observer {
 				timePickerSettingsStart);
 
 		datePickerSettingsStart.setFormatForDatesCommonEra("dd-MM-yyyy");
-		/*
-		 * datePickerSettingsStart.setDateRangeLimits(today.minusDays(0),
-		 * today.plusDays(3000));
-		 */
+
 		DatePickerSettings dateSettingsStopDatePicker = new DatePickerSettings();
 		dateTimePickerStart
 				.addDateTimeChangeListener(new DateTimeChangeListener() {
@@ -546,18 +550,18 @@ public class BotUI extends JFrame implements Observer {
 					public void dateOrTimeChanged(DateTimeChangeEvent arg0) {
 						if (dateTimePickerStart.getDatePicker().getDate() != null) {
 							dateSettingsStopDatePicker.setDateRangeLimits(
-									today.minusDays(functionFactory
+									today.minusDays(FunctionFactory
 											.getDiffWithTodayByDay(dateTimePickerStart)),
 									today.plusDays(3000));
 							textFieldRecur.setEnabled(false);
-							functionFactory.setRadioButtonStatus(r1, r2, true);
+							FunctionFactory.setRadioButtonStatus(r1, r2, true);
 							textIntervalPeriod.setEnabled(true);
 						} else {
 							textFieldRecur.setEnabled(false);
-							functionFactory.setCBDayOfWeekStatus(cbMonday,
+							FunctionFactory.setCBDayOfWeekStatus(cbMonday,
 									cbSunday, cbTuesday, cbWednesday,
 									cbThursday, cbFriday, cbSaturday, false);
-							functionFactory.setRadioButtonStatus(r1, r2, true);
+							FunctionFactory.setRadioButtonStatus(r1, r2, true);
 							textIntervalPeriod.setEnabled(false);
 						}
 
@@ -610,13 +614,13 @@ public class BotUI extends JFrame implements Observer {
 				.addDateTimeChangeListener(new DateTimeChangeListener() {
 					@Override
 					public void dateOrTimeChanged(DateTimeChangeEvent arg0) {
-						functionFactory.checkDateStop(textFieldRecur, cbMonday,
+						FunctionFactory.checkDateStop(textFieldRecur, cbMonday,
 								cbSunday, cbTuesday, cbWednesday, cbThursday,
 								cbFriday, cbSaturday, r2, dateTimePickerStart,
 								dateTimePickerStop);
 						noteStatus.setVisible(false);
 						try {
-							functionFactory.noteStatusAction(btStart, btStop,
+							FunctionFactory.noteStatusAction(btStart, btStop,
 									noteStatus, dateTimePickerStop
 											.getDatePicker().getDate());
 						} catch (Exception e) {
@@ -658,9 +662,9 @@ public class BotUI extends JFrame implements Observer {
 			@Override
 			public void stateChanged(ChangeEvent arg0) {
 				if (!textIntervalPeriod.getValue().equals(0)) {
-					functionFactory.setRadioButtonStatus(r1, r2, true);
+					FunctionFactory.setRadioButtonStatus(r1, r2, true);
 				} else {
-					functionFactory.setRadioButtonStatus(r1, r2, true);
+					FunctionFactory.setRadioButtonStatus(r1, r2, true);
 				}
 			}
 		});
@@ -931,50 +935,49 @@ public class BotUI extends JFrame implements Observer {
 		cSaveSetting.insets = new Insets(5, 10, 10, 10);
 		panelSaveSetting.add(textSaveFolder, cSaveSetting);
 
-		// if(today.now().compareTo0(dateTimePickerStop.datePicker.setDateToToday(););
 		System.out
 				.println("==================================Loading last status=========================================");
 
-		File checkLoading = new File(Constant.saveEstablishStatus);
+		File checkLoading = new File(Constant.SAVE_ESTABLISH_PATH);
 		if (checkLoading.exists()) {
-			if (functionFactory.loadFileAndReturnElement().size() != 0
-					&& functionFactory.loadFileAndReturnElement().size() == 15) {
-				functionFactory.loadingRecentStatus(cbMonday, Boolean
-						.parseBoolean(functionFactory
+			if (FunctionFactory.loadFileAndReturnElement().size() != 0
+					&& FunctionFactory.loadFileAndReturnElement().size() == 15) {
+				FunctionFactory.loadingRecentStatus(cbMonday, Boolean
+						.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(9)), cbSunday,
-						Boolean.parseBoolean(functionFactory
+						Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(8)), cbTuesday,
-						Boolean.parseBoolean(functionFactory
+						Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(10)),
-						cbWednesday, Boolean.parseBoolean(functionFactory
+						cbWednesday, Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(11)),
-						cbThursday, Boolean.parseBoolean(functionFactory
+						cbThursday, Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(12)), cbFriday,
-						Boolean.parseBoolean(functionFactory
+						Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(13)),
-						cbSaturday, Boolean.parseBoolean(functionFactory
+						cbSaturday, Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(14)),
-						textIntervalPeriod, functionFactory
+						textIntervalPeriod, FunctionFactory
 								.loadFileAndReturnElement().get(7), r1, Boolean
-								.parseBoolean(functionFactory
+								.parseBoolean(FunctionFactory
 										.loadFileAndReturnElement().get(0)),
-						r2, Boolean.parseBoolean(functionFactory
+						r2, Boolean.parseBoolean(FunctionFactory
 								.loadFileAndReturnElement().get(1)),
-						dateTimePickerStart, LocalDate.parse((functionFactory
+						dateTimePickerStart, LocalDate.parse((FunctionFactory
 								.loadFileAndReturnElement().get(2))),
-						functionFactory.loadFileAndReturnElement().get(3),
-						dateTimePickerStop, LocalDate.parse((functionFactory
+						FunctionFactory.loadFileAndReturnElement().get(3),
+						dateTimePickerStop, LocalDate.parse((FunctionFactory
 								.loadFileAndReturnElement().get(4))),
-						functionFactory.loadFileAndReturnElement().get(5),
-						textSaveFolder, functionFactory
+						FunctionFactory.loadFileAndReturnElement().get(5),
+						textSaveFolder, FunctionFactory
 								.loadFileAndReturnElement().get(6));
 
-				functionFactory.noteStatusAction(btStart, btStop, noteStatus,
-						LocalDate.parse((functionFactory
+				FunctionFactory.noteStatusAction(btStart, btStop, noteStatus,
+						LocalDate.parse((FunctionFactory
 								.loadFileAndReturnElement().get(4))));
 			} else {
 				DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
-				functionFactory.loadingRecentStatus(cbMonday, false, cbSunday,
+				FunctionFactory.loadingRecentStatus(cbMonday, false, cbSunday,
 						false, cbTuesday, false, cbWednesday, false,
 						cbThursday, false, cbFriday, false, cbSaturday, false,
 						textIntervalPeriod, "0", r1, false, r2, false,
@@ -986,7 +989,7 @@ public class BotUI extends JFrame implements Observer {
 			}
 		} else {
 			DateTimeFormatter dtf = DateTimeFormatter.ofPattern("HH:mm");
-			functionFactory.loadingRecentStatus(cbMonday, false, cbSunday,
+			FunctionFactory.loadingRecentStatus(cbMonday, false, cbSunday,
 					false, cbTuesday, false, cbWednesday, false, cbThursday,
 					false, cbFriday, false, cbSaturday, false,
 					textIntervalPeriod, "0", r1, false, r2, false,
@@ -1034,7 +1037,7 @@ public class BotUI extends JFrame implements Observer {
 					+ BotUI.jcbFridayStatus + "@" + BotUI.jcbSaturStatus;
 			LogFile.saveTextEstablish(saveString);
 			try {
-				functionFactory.loadFileAndReturnElement();
+				FunctionFactory.loadFileAndReturnElement();
 			} catch (Exception e1) {
 				// TODO Auto-generated catch block
 				e1.printStackTrace();
@@ -1051,9 +1054,15 @@ public class BotUI extends JFrame implements Observer {
 
 		btStart.addActionListener(e -> {
 
-			functionFactory.actionBtStart(textIntervalPeriod.getValue()
+			FunctionFactory.actionBtStart(textIntervalPeriod.getValue()
 					.toString(), dateTimePickerStart, dateTimePickerStop,
 					textSaveFolder, dateStartArr);
+			if (textSaveFolder.getText().isEmpty()) {
+				noteStatus.setVisible(true);
+				noteStatus
+						.setText("Dữ liệu tải xuống được lưu vào tệp mặc định: "
+								+ downloadFolder);
+			}
 
 		});
 		cTaskControl.fill = GridBagConstraints.LINE_START;
@@ -1093,7 +1102,7 @@ public class BotUI extends JFrame implements Observer {
 		cTaskControl.gridwidth = 3;
 		cTaskControl.anchor = GridBagConstraints.LINE_START; // bottom of
 		// space
-		cTaskControl.insets = new Insets(20, -120, 10, 10);
+		cTaskControl.insets = new Insets(20, -110, 10, 10);
 		panelTaskControl.add(noteStatus, cTaskControl);
 
 		// Establish=======================

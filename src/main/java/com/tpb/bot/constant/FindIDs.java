@@ -1,4 +1,4 @@
-package com.tpbank.constant;
+package com.tpb.bot.constant;
 
 public enum FindIDs {
 	ID,XPATH,CSS_SELECTOR

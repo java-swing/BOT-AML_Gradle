@@ -1,8 +1,7 @@
-package com.tpbank.util;
+package com.tpb.bot.util;
 
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.List;
 
 import com.github.lgooddatepicker.components.DatePicker;
 import com.itextpdf.kernel.font.PdfFont;
@@ -16,14 +15,13 @@ import com.itextpdf.layout.element.Paragraph;
 import com.itextpdf.layout.element.Table;
 import com.itextpdf.layout.property.TextAlignment;
 import com.itextpdf.text.pdf.BaseFont;
-import com.tpbank.constant.Constant;
 
 public class WriteLogToTable {
 	private DatePicker jdStartDateRs;
 	private DatePicker jdStopDateRs;
 
-	public WriteLogToTable(LinkedList<String> logLinkedList, String nameFile,
-			DatePicker jdStartDateRs, DatePicker jdStopDateRs) {
+	public WriteLogToTable(List<LogFileDownload> logLinkedList,
+			String nameFile, DatePicker jdStartDateRs, DatePicker jdStopDateRs) {
 		super();
 		this.jdStartDateRs = jdStartDateRs;
 		this.jdStopDateRs = jdStopDateRs;
@@ -34,10 +32,11 @@ public class WriteLogToTable {
 	public static final int fontTitleTableSize = 12;
 	public static final int fontContentTableSize = 11;
 
-	public void drawTablePDF(LinkedList<String> logLinkedList, String nameFile)
+	public void drawTablePDF(List<LogFileDownload> logList, String nameFile)
 			throws Exception {
 
-		String DEST = Constant.saveReport + nameFile + ".pdf";
+		String DEST = com.tpb.bot.constant.Constant.SAVE_REPORT + nameFile
+				+ ".pdf";
 		DateTimeFormatter dtf = DateTimeFormatter.ofPattern("dd-MM-yyyy");
 
 		PdfDocument pdfDoc = new PdfDocument(new PdfWriter(DEST));
@@ -64,18 +63,18 @@ public class WriteLogToTable {
 		addCell(table, "Đường dẫn lưu tệp", true);
 		addCell(table, "Ghi chú", true);
 
-		ArrayList<String> list = new ArrayList<String>(logLinkedList);
+		List<LogFileDownload> list = logList;
 		int i = 0;
 		int j = 1;
-		while (i <= list.size() - 6) {
+		while (i < list.size()) {
 			String valueId = "" + j;
-			String valueCreatingTime = list.get(i + 1);
-			String valueKind = list.get(i + 2);
-			String valueFileName = list.get(i + 3);
-			String valueStatus = list.get(i + 4);
-			String valueFilePath = list.get(i + 5);
-			String valueNote = list.get(i + 6);
-			i = i + 7;
+			String valueCreatingTime = list.get(i).getDatefiledownload();
+			String valueKind = list.get(i).getType();
+			String valueFileName = list.get(i).getName();
+			String valueStatus = list.get(i).getStatus();
+			String valueFilePath = list.get(i).getFilepathfolder();
+			String valueNote = list.get(i).getNote();
+			i++;
 			j++;
 
 			addCell(table, valueId, false);
@@ -90,7 +89,8 @@ public class WriteLogToTable {
 		doc.add(table);
 		doc.close();
 		System.out.println("Data export to pdf file has been successfully!");
-		System.out.println("Pdf file has save in: " + Constant.saveReport + ": " + nameFile
+		System.out.println("Pdf file has save in: "
+				+ com.tpb.bot.constant.Constant.SAVE_REPORT + ": " + nameFile
 				+ ".pdf");
 	}
 
@@ -98,11 +98,15 @@ public class WriteLogToTable {
 		Cell cell = new Cell();
 		cell.add(header);
 		if (check == true) {
+			cell.setFontSize(fontTitleTableSize);
 			cell.setBold();
+			table.addHeaderCell(cell);
+			cell.setTextAlignment(TextAlignment.CENTER);
+		} else {
+			table.addCell(cell);
+			cell.setFontSize(fontContentTableSize);
+			
 		}
-		cell.setFontSize(fontTitleTableSize);
-		cell.setTextAlignment(TextAlignment.CENTER);
-		table.addCell(cell);
 	}
 
 }

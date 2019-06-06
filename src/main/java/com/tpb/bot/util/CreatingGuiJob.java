@@ -1,6 +1,4 @@
-package com.tpbank.util;
-
-import com.tpbank.ui.BotUI;
+package com.tpb.bot.util;
 
 import java.awt.GridBagConstraints;
 import java.time.LocalDate;
@@ -9,6 +7,9 @@ import java.util.List;
 
 
 import javax.swing.JCheckBox;
+
+
+import com.tpb.bot.ui.BotUI;
 
 public class CreatingGuiJob {
 	public static void cBDayOfWeekStatus(JCheckBox cbox, boolean cbStatus) {
@@ -53,18 +54,18 @@ public class CreatingGuiJob {
 		String dateStr = BotUI.dateTimePickerStart.getDatePicker()
 				.getDate().getDayOfWeek().toString();
 		if (cbStatus == true) {
-			Calendar calEnd = functionFactory.calendarFromPickers(
+			Calendar calEnd = FunctionFactory.calendarFromPickers(
 					BotUI.dateTimePickerStop.getDatePicker(),
 					BotUI.dateTimePickerStop.getTimePicker());
 			// Calendar calStart = Calendar.getInstance();
-			Calendar calStart = functionFactory.calendarFromPickers(
+			Calendar calStart = FunctionFactory.calendarFromPickers(
 					BotUI.dateTimePickerStart.getDatePicker(),
 					BotUI.dateTimePickerStart.getTimePicker());
 			if (dayOfWeek.equals(dateStr)) {
 				BotUI.dateStartArr.add(BotUI.dateTimePickerStart
 						.getDatePicker().getDate());
 			} else {
-				List<LocalDate> lst = functionFactory.getDateTimeFromDayOfWeek(calStart,
+				List<LocalDate> lst = FunctionFactory.getDateTimeFromDayOfWeek(calStart,
 						calEnd, dayOfWeek, BotUI.dateTimePickerStart
 								.getTimePicker().getTime().getHour(),
 						BotUI.dateTimePickerStart.getTimePicker()

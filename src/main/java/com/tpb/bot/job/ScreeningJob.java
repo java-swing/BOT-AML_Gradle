@@ -1,14 +1,13 @@
-package com.tpbank.job;
+package com.tpb.bot.job;
 
 import java.sql.SQLException;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
+import java.util.TimerTask;
 
-import com.tpbank.ui.BotUI;
-import com.tpbank.util.FileUtil;
-import com.tpbank.util.Util;
-import com.tpbank.util.functionFactory;
+import org.apache.commons.logging.Log;
 import org.apache.log4j.Logger;
 import org.apache.log4j.PropertyConfigurator;
 import org.json.simple.JSONArray;
@@ -22,8 +21,6 @@ import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
-
 import org.quartz.CronScheduleBuilder;
 import org.quartz.Job;
 import org.quartz.JobBuilder;
@@ -37,6 +34,13 @@ import org.quartz.Trigger;
 import org.quartz.TriggerBuilder;
 import org.quartz.impl.StdSchedulerFactory;
 
+import com.tpb.bot.constant.Actions;
+import com.tpb.bot.constant.Constant;
+import com.tpb.bot.constant.FindIDs;
+import com.tpb.bot.ui.BotUI;
+import com.tpb.bot.util.FileUtil;
+import com.tpb.bot.util.Util;
+import com.tpb.bot.util.FunctionFactory;
 
 public class ScreeningJob implements Job {
 
@@ -44,25 +48,30 @@ public class ScreeningJob implements Job {
 
 	public static WebDriver driver = null;
 	private static Scheduler scheduler;
-	
+	public static LocalTime startLogJob;
+
 	@Override
-	public void execute(JobExecutionContext context) throws JobExecutionException {
+	public void execute(JobExecutionContext context)
+			throws JobExecutionException {
 		displayAndWriteLog("execute fired");
 		JobDataMap jobDataMap = context.getMergedJobDataMap();
 		String partner = jobDataMap.getString("partner");
-        String task = jobDataMap.getString("task");
-        MessageObservable observable = (MessageObservable) jobDataMap.get("observable");
-        displayAndWriteLog(partner + "-" + task + " execute fired");
-        
+		String task = jobDataMap.getString("task");
+		MessageObservable observable = (MessageObservable) jobDataMap
+				.get("observable");
+		displayAndWriteLog(partner + "-" + task + " execute fired");
+
 		doTask(observable, partner, task);
 	}
 
-	public static void doTask(MessageObservable observable, String partner, String task){
-		//Do something
+	public static void doTask(MessageObservable observable, String partner,
+			String task) {
+		// Do something
 		showMessage(observable, "hello");
 	}
-	
-	public static void doProcess(String flowId, String key) throws InterruptedException, ClassNotFoundException, SQLException {
+
+	public static void doProcess(String flowId, String key)
+			throws InterruptedException, ClassNotFoundException, SQLException {
 		PropertyConfigurator.configure("src/log4j.properties");
 		// Process
 		JSONObject flow = Util.getFlowById(flowId);
@@ -74,14 +83,26 @@ public class ScreeningJob implements Job {
 
 			// Loop each step
 			step = Util.getStep(flow, String.valueOf(i));
-			process4Step(step, key);			
+			try {
+				process4Step(step, key);
+			} catch (Exception e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+				ScreeningJob.displayAndWriteLogError(e);
+			}
 		}
-
+//		Thread.sleep(500);
 		// Tro ve home
-		goBack();
+		try {
+			goBack();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			ScreeningJob.displayAndWriteLogError(e);
+		}
 		// Save file download
-		Thread.sleep(4000);
-		FileUtil.saveFileDownload(flowId,key);
+		Thread.sleep(Constant.TIME_SLEEP_IN_JOB);
+		FileUtil.saveFileDownload(flowId, key);
 	}
 
 	public static boolean checkAlreadyLogin() {
@@ -129,7 +150,7 @@ public class ScreeningJob implements Job {
 				action = (String) jsonObject.get("action");
 				waitElement = (String) jsonObject.get("waitElement");
 
-				if ("ID".equals(findBy)) {
+				if (FindIDs.ID.toString().equals(findBy)) {
 					webElement = driver.findElement(By.id(id));
 					if (i == 1) {
 						displayAndWriteLog("Tìm phần tử tên đăng nhập .");
@@ -138,7 +159,7 @@ public class ScreeningJob implements Job {
 						displayAndWriteLog("Tìm phần tử  mật khẩu đăng nhập .");
 					}
 				}
-				if ("SENDTEXT".equals(action)) {
+				if (Actions.SENDTEXT.toString().equals(action)) {
 					webElement.sendKeys(value);
 					new WebDriverWait(driver, 50);
 					if (i == 1) {
@@ -149,21 +170,21 @@ public class ScreeningJob implements Job {
 					}
 
 				}
-				if ("CLICK".equals(action)) {
+				if (Actions.CLICK.toString().equals(action)) {
 					webElement.click();
 					if (i == 3) {
 						displayAndWriteLog("Click nút đăng nhập .");
 					}
 					WebDriverWait wait1 = new WebDriverWait(driver, 30);
-					wait1.until(ExpectedConditions.visibilityOfElementLocated(By
-							.id(waitElement)));
+					wait1.until(ExpectedConditions
+							.visibilityOfElementLocated(By.id(waitElement)));
 					driver.switchTo()
 							.frame(driver.findElement(By
 									.xpath("//*[@id=\"accelus_components_application_IframeView_0\"]/iframe")));
 
 					WebDriverWait wait2 = new WebDriverWait(driver, 30);
-					wait2.until(ExpectedConditions.visibilityOfElementLocated(By
-							.id("uniqName_2_0")));
+					wait2.until(ExpectedConditions
+							.visibilityOfElementLocated(By.id("uniqName_2_0")));
 				}
 
 			}
@@ -174,14 +195,13 @@ public class ScreeningJob implements Job {
 		}
 	}
 
-	public static void process4Step(JSONObject step, String key){
+	public static void process4Step(JSONObject step, String key) {
 		PropertyConfigurator.configure("src/log4j.properties");
 		if (step == null)
 			return;
 
 		JSONArray arr = Util.getStepElements(step);
 		String id = null;
-		String value = null;
 		String findBy = null;
 		String action = null;
 		WebElement webElement = null;
@@ -193,11 +213,8 @@ public class ScreeningJob implements Job {
 
 			id = (String) jsonObject.get("id");
 
-			value = (String) jsonObject.get("value");
 			if ((String) jsonObject.get("value") == null) {
-				value = key;
 			} else {
-				value = (String) jsonObject.get("value");
 			}
 
 			findBy = (String) jsonObject.get("findBy");
@@ -206,22 +223,41 @@ public class ScreeningJob implements Job {
 			switch (findBy) {
 			case "ID":
 
-				wait = new WebDriverWait(driver, 30);
-				wait.until(ExpectedConditions.visibilityOfElementLocated(By.id(id)));
-				webElement = driver.findElement(By.id(id));
-				break;
+				try {
+					wait = new WebDriverWait(driver, 30);
+					wait.until(ExpectedConditions.visibilityOfElementLocated(By
+							.id(id)));
+					webElement = driver.findElement(By.id(id));
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 			case "XPATH":
-				wait = new WebDriverWait(driver, 30);
-				wait.until(ExpectedConditions.visibilityOfElementLocated(By
-						.xpath(id)));
-				webElement = driver.findElement(By.xpath(id));
-				break;
+				try {
+					wait = new WebDriverWait(driver, 30);
+					wait.until(ExpectedConditions.visibilityOfElementLocated(By
+							.xpath(id)));
+					webElement = driver.findElement(By.xpath(id));
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 			case "CSS_SELECTOR":
-				wait = new WebDriverWait(driver, 30);
-				wait.until(ExpectedConditions.visibilityOfElementLocated(By
-						.cssSelector(id)));
-				webElement = driver.findElement(By.cssSelector(id));
-				break;
+				try {
+					wait = new WebDriverWait(driver, 30);
+					wait.until(ExpectedConditions.visibilityOfElementLocated(By
+							.cssSelector(id)));
+					webElement = driver.findElement(By.cssSelector(id));
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 
 			default:
 				break;
@@ -229,46 +265,65 @@ public class ScreeningJob implements Job {
 
 			switch (action) {
 			case "CLICK":
-				//System.out.println(action);
-				webElement.click();
-				new WebDriverWait(driver, 50);
-				displayAndWriteLog("Click nút.");
-				break;
+				try {
+					// System.out.println(action);
+					try {
+						webElement.click();
+					} catch (Exception e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+						ScreeningJob.displayAndWriteLogError(e);
+					}
+					new WebDriverWait(driver, 50);
+					displayAndWriteLog("Click nút.");
+					startLogJob = LocalTime.now();
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 			case "SENDTEXT":
-				//System.out.println("value:" + value);
-				webElement.sendKeys(key);
-				new WebDriverWait(driver, 50);
-				displayAndWriteLog("Điền dữ liệu tìm kiếm .");
-				break;
+				try {
+					// System.out.println("value:" + value);
+					webElement.sendKeys(key);
+					new WebDriverWait(driver, 50);
+					displayAndWriteLog("Điền dữ liệu tìm kiếm .");
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 			case "ENTER":
-				//System.out.println(action);
-				webElement.sendKeys(Keys.ENTER);
-				new WebDriverWait(driver, 50);
-				displayAndWriteLog("Nhấn Enter.");
-				break;
+				try {
+					// System.out.println(action);
+					webElement.sendKeys(Keys.ENTER);
+					new WebDriverWait(driver, 50);
+					displayAndWriteLog("Nhấn Enter.");
+					break;
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+					displayAndWriteLogError(e);
+				}
 			default:
 				break;
-			}		
+			}
 		}
-		try {
-			Thread.sleep(2000);
-		} catch (InterruptedException e) {
-			e.printStackTrace();
-			ScreeningJob.displayAndWriteLogError(e);
-		}
-		
+
 	}
-	
-	public static void goBack(){
+
+	public static void goBack() {
 		WebElement Screening = driver.findElement(By
 				.linkText("< Back to Screening"));
 		JavascriptExecutor executor = (JavascriptExecutor) driver;
 		executor.executeScript("arguments[0].click();", Screening);
-		
+
 	}
 
 	private static ChromeOptions configChrome() {
-		System.setProperty("webdriver.chrome.driver", "driver/chromedriver.exe");
+		System.setProperty("webdriver.chrome.driver", Constant.DRIVER_FILE_PATH);
 		HashMap<String, Object> chromePrefs = new HashMap<String, Object>();
 		chromePrefs.put("profile.default_content_settings.popups", 0);
 		chromePrefs.put("download.default_directory", BotUI.downloadFolder);
@@ -276,58 +331,63 @@ public class ScreeningJob implements Job {
 		options.setExperimentalOption("prefs", chromePrefs);
 		return options;
 	}
-	
-	public static void createNewJob(BotUI botUI, String partner, String task, String cronExpression){
-		//* * * * * * *
-		//Second Min Hour Day(Month) Month Day(Week) Year(Optional)
-		//"0/5 * * * * ?"
+
+	public static void createNewJob(BotUI botUI, String partner, String task,
+			String cronExpression) {
+		// * * * * * * *
+		// Second Min Hour Day(Month) Month Day(Week) Year(Optional)
+		// "0/5 * * * * ?"
 		displayAndWriteLog(partner + "- " + task + ": createNewJob");
 		try {
-			
+
 			JobDataMap jobDataMap = new JobDataMap();
-	        jobDataMap.put("partner", partner);
-	        jobDataMap.put("task", task);
-	        
-	        displayAndWriteLog(partner + ": createNewJob 2");
-	        
-	        MessageObservable observable = new MessageObservable();
-        	observable.addObserver(botUI);
-	        jobDataMap.put("observable", observable);
-			
-	        displayAndWriteLog(partner + ": createNewJob 3");
-	        
-			JobDetail job = JobBuilder.newJob(ScreeningJob.class)
-					.withIdentity(partner.toUpperCase() + "_" + task.toUpperCase(), "GROUP_01")
-					.usingJobData(jobDataMap)
-					.build();
-			
+			jobDataMap.put("partner", partner);
+			jobDataMap.put("task", task);
+
+			displayAndWriteLog(partner + ": createNewJob 2");
+
+			MessageObservable observable = new MessageObservable();
+			observable.addObserver(botUI);
+			jobDataMap.put("observable", observable);
+
+			displayAndWriteLog(partner + ": createNewJob 3");
+
+			JobDetail job = JobBuilder
+					.newJob(ScreeningJob.class)
+					.withIdentity(
+							partner.toUpperCase() + "_" + task.toUpperCase(),
+							"GROUP_01").usingJobData(jobDataMap).build();
+
 			displayAndWriteLog(partner + ": createNewJob 4");
-			
+
 			Trigger trigger = TriggerBuilder
 					.newTrigger()
-					.withIdentity(partner.toUpperCase() + "_" + task.toUpperCase(), "GROUP_01")
+					.withIdentity(
+							partner.toUpperCase() + "_" + task.toUpperCase(),
+							"GROUP_01")
 					.withSchedule(
-						CronScheduleBuilder.cronSchedule(cronExpression))
+							CronScheduleBuilder.cronSchedule(cronExpression))
 					.build();
-			
-			displayAndWriteLog(partner + ": scheduler is null: " + (scheduler==null));
-			
-			if(scheduler == null){
+
+			displayAndWriteLog(partner + ": scheduler is null: "
+					+ (scheduler == null));
+
+			if (scheduler == null) {
 				scheduler = new StdSchedulerFactory().getScheduler();
 				scheduler.start();
 				displayAndWriteLog(partner + ": scheduler start");
 			}
-	    	scheduler.scheduleJob(job, trigger);
-	    	
+			scheduler.scheduleJob(job, trigger);
+
 		} catch (SchedulerException e) {
 			System.out.println("SchedulerException: " + e.toString());
 			ScreeningJob.displayAndWriteLogError(e);
 		}
 	}
-	
-	public static void shutdown(){
+
+	public static void shutdown() {
 		try {
-			if(scheduler != null && scheduler.isStarted()){
+			if (scheduler != null && scheduler.isStarted()) {
 				scheduler.shutdown();
 				System.out.println("Shutdown scheduler!");
 			}
@@ -336,26 +396,52 @@ public class ScreeningJob implements Job {
 			ScreeningJob.displayAndWriteLogError(e);
 		}
 	}
-	
-	public static void showMessage(MessageObservable observable, String msg){
+
+	public static void showMessage(MessageObservable observable, String msg) {
 		observable.changeData(msg);
 	}
-		
+
 	public static void displayAndWriteLog(String log) {
-        logger.info(log);
-        String DATE_FORMATTER= "dd-MM-yyyy HH:mm:ss .SSS";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
-        BotUI.printLogOut = (LocalDateTime.now().format(formatter) +": \t"+ log + "\n");
-        functionFactory.loadMonitor(BotUI.printLogOut);
- }
-	
-	
+		try {
+			logger.info(log);
+			String DATE_FORMATTER = "dd-MM-yyyy HH:mm:ss .SSS";
+			DateTimeFormatter formatter = DateTimeFormatter
+					.ofPattern(DATE_FORMATTER);
+			BotUI.printLogOut = (LocalDateTime.now().format(formatter) + ": \t"
+					+ log + "\n");
+			FunctionFactory.loadMonitor(BotUI.printLogOut);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			displayAndWriteLogError(e);
+		}
+	}
+
 	public static void displayAndWriteLogError(Exception e) {
-        logger.error(e.getMessage(),e);
-        String DATE_FORMATTER= "dd-MM-yyyy HH:mm:ss .SSS";
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DATE_FORMATTER);
-        BotUI.printLogOut = (LocalDateTime.now().format(formatter) +": \t"+ e.getMessage() + "\n");
-        functionFactory.loadMonitor(BotUI.printLogOut);
- }
+		logger.error(e.getMessage(), e);
+		String DATE_FORMATTER = "dd-MM-yyyy HH:mm:ss .SSS";
+		DateTimeFormatter formatter = DateTimeFormatter
+				.ofPattern(DATE_FORMATTER);
+		BotUI.printLogOut = (LocalDateTime.now().format(formatter) + ": \t"
+				+ e.getMessage().substring(0, 1).toUpperCase()
+				+ e.getMessage().substring(1, e.getMessage().indexOf("\n")) + "...\n");
+		FunctionFactory.loadMonitor(BotUI.printLogOut);
+	}
+
+	public static class StartTask extends TimerTask {
+
+		public StartTask() {
+			super();
+		}
+
+		public void run() {
+			try {
+				FileUtil.runBot();
+			} catch (Exception e) {
+				e.printStackTrace();
+				ScreeningJob.displayAndWriteLogError(e);
+			}
+		}
+	}
 
 }

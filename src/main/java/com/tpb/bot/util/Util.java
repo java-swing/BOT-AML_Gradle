@@ -1,11 +1,12 @@
-package com.tpbank.util;
+package com.tpb.bot.util;
 
 import java.util.Iterator;
 
-import com.tpbank.config.Config;
-import com.tpbank.job.ScreeningJob;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
+
+import com.tpb.bot.config.Config;
+import com.tpb.bot.job.ScreeningJob;
 
 public class Util {
 

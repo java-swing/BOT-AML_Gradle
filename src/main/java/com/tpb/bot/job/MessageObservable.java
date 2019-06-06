@@ -1,4 +1,4 @@
-package com.tpbank.job;
+package com.tpb.bot.job;
 
 import java.util.Observable;
 

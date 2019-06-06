@@ -1,4 +1,4 @@
-package com.tpbank.util;
+package com.tpb.bot.util;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -15,9 +15,9 @@ import javax.swing.JSpinner;
 import javax.swing.JTextArea;
 
 import com.github.lgooddatepicker.components.DateTimePicker;
-import com.tpbank.constant.Constant;
-import com.tpbank.job.ScreeningJob;
-import com.tpbank.ui.BotUI;
+import com.tpb.bot.constant.Constant;
+import com.tpb.bot.job.ScreeningJob;
+import com.tpb.bot.ui.BotUI;
 
 public class LogFile {
 
@@ -90,7 +90,7 @@ public class LogFile {
 
 		try {
 
-			file = new File(Constant.saveEstablishStatus);
+			file = new File(Constant.SAVE_ESTABLISH_PATH);
 			fop = new FileOutputStream(file);
 
 			// if file doesnt exists, then create it
@@ -122,6 +122,46 @@ public class LogFile {
 		}
 	}
 
+	public static void saveLogFromDBToTxt (String saveString, String pathOfSaveFolder) {
+
+		FileOutputStream fop = null;
+		File file;
+		String content = saveString;
+
+		try {
+
+			file = new File(pathOfSaveFolder);
+			fop = new FileOutputStream(file);
+
+			// if file doesnt exists, then create it
+			if (!file.exists()) {
+				file.createNewFile();
+			}
+
+			// get the content in bytes
+			byte[] contentInBytes = content.getBytes();
+
+			fop.write(contentInBytes);
+			fop.flush();
+			fop.close();
+
+			System.out.println("Save data Done");
+
+		} catch (IOException e) {
+			e.printStackTrace();
+			ScreeningJob.displayAndWriteLogError(e);
+		} finally {
+			try {
+				if (fop != null) {
+					fop.close();
+				}
+			} catch (IOException e) {
+				e.printStackTrace();
+				ScreeningJob.displayAndWriteLogError(e);
+			}
+		}
+	}
+	
 	public static void loadingRecentStatus(JCheckBox cbMonday,
 			Boolean cbMondayStatus, JCheckBox cbSunday, Boolean cbSundayStatus,
 			JCheckBox cbTuesday, Boolean cbTuesdayStatus,

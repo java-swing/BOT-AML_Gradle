@@ -1,11 +1,11 @@
-package com.tpbank;
+package com.tpb.bot;
 
 import javax.swing.SwingUtilities;
 
-import com.tpbank.job.ScreeningJob;
-import com.tpbank.ui.BotUI;
 import org.apache.log4j.Logger;
 
+import com.tpb.bot.job.ScreeningJob;
+import com.tpb.bot.ui.BotUI;
 
 public class AppStarter {
 

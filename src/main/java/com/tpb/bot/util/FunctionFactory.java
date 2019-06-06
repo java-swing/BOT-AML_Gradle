@@ -1,6 +1,5 @@
-package com.tpbank.util;
+package com.tpb.bot.util;
 
-import java.awt.Color;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -19,8 +18,6 @@ import java.util.List;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.concurrent.TimeUnit;
-import java.util.prefs.Preferences;
-
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JLabel;
@@ -33,12 +30,12 @@ import javax.swing.SwingUtilities;
 import com.github.lgooddatepicker.components.DatePicker;
 import com.github.lgooddatepicker.components.DateTimePicker;
 import com.github.lgooddatepicker.components.TimePicker;
-import com.tpbank.constant.Constant;
-import com.tpbank.job.ScreeningJob;
-import com.tpbank.job.StartTask;
-import com.tpbank.ui.BotUI;
+import com.tpb.bot.constant.Constant;
+import com.tpb.bot.job.ScreeningJob;
+import com.tpb.bot.job.ScreeningJob.StartTask;
+import com.tpb.bot.ui.BotUI;
 
-public class functionFactory {
+public class FunctionFactory {
 	public static String printLogOut = "";
 	public static BufferedReader br;
 
@@ -53,7 +50,8 @@ public class functionFactory {
 							+ "\" " + formattedDate + " \"");
 			btStart.setEnabled(false);
 			btStop.setEnabled(false);
-		} else {
+		} 
+		else {
 			noteStatus.setVisible(false);
 			btStart.setEnabled(true);
 			btStop.setEnabled(true);
@@ -117,11 +115,6 @@ public class functionFactory {
 			Boolean cbDayOfWeekStatus) {
 		cbDayOfWeek.setSelected(cbDayOfWeekStatus);
 		cbDayOfWeek.setEnabled(cbDayOfWeekStatus);
-	}
-
-	public static String defaultPathString() {
-		Preferences pref = Preferences.userRoot();
-		return pref.get("DEFAULT_PATH", "");
 	}
 
 	@SuppressWarnings("deprecation")
@@ -274,8 +267,8 @@ public class functionFactory {
 						BotUI.period = 1;
 					}
 				}
-				Timer timer2 = new Timer();
-				timer2.schedule(new TimerTask() {
+				Timer timerRunDayOfWeek = new Timer();
+				timerRunDayOfWeek.schedule(new TimerTask() {
 
 					@Override
 					public void run() {
@@ -283,7 +276,7 @@ public class functionFactory {
 						Date dateNow = new Date();
 						if (dateNow.compareTo(calEnd.getTime()) > 0) {
 							System.out.println("Stop!");
-							timer2.cancel();
+							timerRunDayOfWeek.cancel();
 						}
 
 					}
@@ -300,13 +293,19 @@ public class functionFactory {
 					BotUI.period = 1;
 				}
 			}
-			Timer timer2 = new Timer();
-			timer2.schedule(new TimerTask() {
+			Timer timerDailyJob = new Timer();
+			timerDailyJob.schedule(new TimerTask() {
 				@SuppressWarnings("deprecation")
 				@Override
 				public void run() {
 					System.out.println("Running!");
-					downloadFile(txtSaveFolder);
+					try {
+						downloadFile(txtSaveFolder);
+					} catch (Exception e1) {
+						// TODO Auto-generated catch block
+						e1.printStackTrace();
+						ScreeningJob.displayAndWriteLogError(e1);
+					}
 					try {
 						Date dateNow = new Date();
 						dateNow.setSeconds(00);
@@ -317,7 +316,7 @@ public class functionFactory {
 
 						if (dateNow.compareTo(calEnd.getTime()) > 0) {
 							System.out.println("Stop!");
-							timer2.cancel();
+							timerDailyJob.cancel();
 						}
 
 						if (dateNow.compareTo(datePause) >= 0) {
@@ -332,7 +331,7 @@ public class functionFactory {
 								stringBuilder.append(":");
 								stringBuilder.append(dateNow2.getMinutes());
 								String time1 = stringBuilder.toString();
-								String time2 = Constant.timePauseDaily;
+								String time2 = Constant.TIME_PAUSE_DAILY;
 								SimpleDateFormat format = new SimpleDateFormat(
 										"HH:mm");
 								Date date1;
@@ -362,7 +361,6 @@ public class functionFactory {
 						ScreeningJob.displayAndWriteLogError(e);
 					}
 				}
-
 			}, calStart.getTime(), TimeUnit.MILLISECONDS.convert(BotUI.period,
 					TimeUnit.MINUTES));
 			System.out.println("BotUI.period: "
@@ -377,14 +375,7 @@ public class functionFactory {
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override
 			public void run() {
-				if(logs.contains("WARNING")){
-					BotUI.display.append(logs);
-					BotUI.display.setSelectionColor(Color.RED);
-
-				}else{
-					BotUI.display.append(logs);
-					BotUI.display.setSelectionColor(Color.BLACK);
-				}
+				BotUI.display.append(logs);
 
 			}
 		});
@@ -393,19 +384,25 @@ public class functionFactory {
 	public static String downloadFolder = Constant.defaultPathString();
 
 	private static void downloadFile(JTextArea txtSaveFolder) {
-		downloadFolder = txtSaveFolder.getText();
-		File dir = new File(BotUI.downloadFolder);
-		if (!dir.exists()) {
-			BotUI.downloadFolder = defaultPathString();
+		try {
+			downloadFolder = txtSaveFolder.getText();
+			File dir = new File(BotUI.downloadFolder);
+			if (!dir.exists()) {
+				BotUI.downloadFolder = Constant.defaultPathString();
+			}
+			// StartTask startTask = new StartTask(BotUI.downloadFolder);
+			StartTask startTask = new StartTask();
+			startTask.run();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			ScreeningJob.displayAndWriteLogError(e);
 		}
-		 //StartTask startTask = new StartTask(BotUI.downloadFolder);
-		StartTask startTask = new StartTask();
-		 startTask.run();
 	}
 
 	public static ArrayList<String> loadFileAndReturnElement() throws Exception {
 		ArrayList<String> loadingStatus = new ArrayList<String>();
-		File file = new File(Constant.saveEstablishStatus);
+		File file = new File(Constant.SAVE_ESTABLISH_PATH);
 
 		br = new BufferedReader(new FileReader(file));
 		String st = "";
@@ -418,6 +415,23 @@ public class functionFactory {
 		}
 		return loadingStatus;
 	}
+	
+	public static ArrayList<String> loadFileLog() throws Exception {
+		ArrayList<String> loadingStatus = new ArrayList<String>();
+		File file = new File(Constant.PATH_LOADING_LOG);
+
+		br = new BufferedReader(new FileReader(file));
+		String st = "";
+		while ((st = br.readLine()) != null) {
+			String s1 = st;
+			String[] paragraph = s1.split("\n");
+			for (String line : paragraph) {
+				loadingStatus.add(line);
+			}
+		}
+		return loadingStatus;
+	}
+	
 
 	public static List<LocalDate> getDateTimeFromDayOfWeek(Calendar cStart,
 			Calendar cEnd, String dayOfWeekInput, int hourInput, int minuteInput) {
@@ -514,7 +528,7 @@ public class functionFactory {
 				+ BotUI.jcbSaturStatus;
 		LogFile.saveTextEstablish(saveString);
 		try {
-			functionFactory.loadFileAndReturnElement();
+			FunctionFactory.loadFileAndReturnElement();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();

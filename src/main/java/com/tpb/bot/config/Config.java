@@ -1,4 +1,4 @@
-package com.tpbank.config;
+package com.tpb.bot.config;
 
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -31,7 +31,7 @@ public class Config {
 	}
 	
 	static {
-		loadProperties();
+//		loadProperties();
 		loadConfig();
 	}
 
@@ -56,7 +56,7 @@ public class Config {
 
 			InputStream is = Config.class.getClassLoader().getResourceAsStream(
 					"config.properties");
-			properties.load(is);
+//			properties.load(is);
 
 		} catch (Exception e) {
 			e.printStackTrace();
